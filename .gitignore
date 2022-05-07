@@ -1,0 +1,7 @@
+FftBuffer/JuceLibraryCode
+FftBuffer/Builds
+*.asv
+*.wav
+*.mp3
+.DS_Store
+
