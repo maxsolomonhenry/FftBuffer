@@ -28,18 +28,15 @@ pIn = 1;
 pOut = pIn + blockSize - 1;
 
 % Plugin parameters.
-frameSize = 128;
+frameSize = 2048;
 numOverlap = 4;
 
-frames = zeros(frameSize, numOverlap - 1);
+frames = zeros(frameSize, numOverlap);
 
 hopSize = ceil(frameSize / numOverlap);
-bufferSize = frameSize;
-buffer = zeros(bufferSize, 1);
-myWindow = hamming(bufferSize);
+myWindow = hamming(frameSize);
 
-pWrite = 1;
-pRead = (0:(numOverlap - 1))' * hopSize + 1;
+pRead = mod((0:-1:-(numOverlap - 1))' * hopSize + 1, frameSize);
 pFrame = 1;
 
 figure();
@@ -49,9 +46,11 @@ for b = 1:numBlocks
     % `processBlock()`
     for n = 1:blockSize
 
-        for f = 1:numOverlap
+        frames(pRead(1), 1) = block(n);
+
+        for f = 2:numOverlap
             % Read into each frame, and window at the same time.
-            frames(pFrame, f) = buffer(pRead(f));% * myWindow(pFrame);
+            frames(pFrame, f) = frames(pRead(f), 1);%   * myWindow(pFrame);
         end
 
         if pFrame == frameSize
@@ -59,36 +58,22 @@ for b = 1:numBlocks
             % Grab overlap part.
 
             % Synthesis buffer has to factor in somehow.
+            for f = 1:numOverlap
+                subplot(numOverlap, 1, f);
+                plot(frames(:, f));
+                hold on;
+                plot(pFrame, 0, "*");
+                hold off;
+                xlabel("Time (samples)");
+                ylabel("Amplitude");
+                ylim([-.25, .25]);
+            end
+
+            pause();
         end
 
-
-        for f = 1:numOverlap
-            subplot(numOverlap + 1, 1, f);
-            plot(frames(:, f));
-            hold on;
-            plot(pFrame, 0, "*");
-            hold off;
-            xlabel("Time (samples)");
-            ylabel("Amplitude");
-            ylim([-.25, .25]);
-        end
-
-        subplot(numOverlap + 1, 1, numOverlap + 1);
-        plot(buffer)
-        hold on;
-        plot(pRead, zeros(size(pRead)), '*');
-        hold off;
-        xlabel("Time (samples)");
-        ylabel("Amplitude");
-        ylim([-.25, .25]);
-
-        pause();
-
-        buffer(pWrite) = block(n);
-
-        pWrite = mod(pWrite, bufferSize) + 1;
-        pRead = mod(pRead, bufferSize) + 1;
-        pFrame = mod(pFrame, bufferSize) + 1;
+        pRead = mod(pRead, frameSize) + 1;
+        pFrame = mod(pFrame, frameSize) + 1;
     end
 
     x(pIn:pOut) = block;
