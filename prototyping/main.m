@@ -19,10 +19,10 @@ numBlocks = length(x) / blockSize;
 
 time = (0:(length(x) - 1)) / sr;
 
-% figure;
-% ax = gca;
-% hold(ax, "on");
-% plot(ax, time, x, "DisplayName", "in");
+figure;
+ax = gca;
+hold(ax, "on");
+plot(ax, time, x, "DisplayName", "in");
 
 pIn = 1;
 pOut = pIn + blockSize - 1;
@@ -31,6 +31,7 @@ pOut = pIn + blockSize - 1;
 frameSize = 2048;
 numOverlap = 4;
 
+buffer = zeros(frameSize, 1);
 frames = zeros(frameSize, numOverlap);
 
 hopSize = ceil(frameSize / numOverlap);
@@ -46,16 +47,16 @@ for b = 1:numBlocks
     % `processBlock()`
     for n = 1:blockSize
 
-        frames(pRead(1), 1) = block(n);
+        buffer(pRead(1)) = block(n);
 
-        for f = 2:numOverlap
+        for f = 1:numOverlap
             % Read into each frame, and window at the same time.
-            frames(pFrame, f) = frames(pRead(f), 1);%   * myWindow(pFrame);
+            frames(pRead(1), f) = buffer(pRead(f));
         end
 
         if pFrame == frameSize
 
-            % Grab overlap part.
+            frames = frames .* myWindow(pFrame);
 
             % Synthesis buffer has to factor in somehow.
             for f = 1:numOverlap
