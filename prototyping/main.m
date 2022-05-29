@@ -40,11 +40,13 @@ synthBuffer = zeros(hopSize, 1);
 frameBuffers = zeros(frameSize, numOverlap);
 
 myWindow = hamming(frameSize);
-% myWindow = normalizeForUnityAtOverlap(myWindow, numOverlap);
+myWindow = normalizeForUnityAtOverlap(myWindow, numOverlap);
 
 pBufferWrite = 1;
 pSynthRead = 1;
 pNewestFrame = 1;
+
+outBlock = zeros(blockSize, 1);
 
 for b = 1:numBlocks
     block = x(pIn:pOut);
@@ -78,6 +80,7 @@ for b = 1:numBlocks
             end
 
             synthBuffer = fillSynthBuffer(frameBuffers, pNewestFrame, numOverlap, hopSize);
+            pSynthRead = 1;
 
             if doPlots
                 figure(3);
@@ -93,7 +96,7 @@ for b = 1:numBlocks
         block(n) = synthBuffer(pSynthRead);
 
         pBufferWrite = mod(pBufferWrite, frameSize) + 1;
-        pSynthRead = mod(pSynthRead, hopSize) + 1;
+        pSynthRead = pSynthRead + 1;
         
     end
 
@@ -124,7 +127,7 @@ function synthBuffer = fillSynthBuffer(frameBuffers, pNewestFrame, numOverlap, h
 
     synthBuffer = zeros(hopSize, 1);
 
-    frameOrder = pNewestFrame:(pNewestFrame + numOverlap - 1);
+    frameOrder = pNewestFrame:-1:(pNewestFrame - numOverlap + 1);
     frameOrder = mod(frameOrder - 1, numOverlap) + 1;
 
     pIn = 1;
