@@ -8,6 +8,8 @@ clc; clear; close all;
 addpath(genpath('/Users/maxhenry/Documents/Matlab/eers-audio-toolbox'));
 applyPlotSettings();
 
+doPlots = false;
+
 % Simulation parameters.
 fpath = "/Users/maxhenry/Documents/Matlab/eers-audio-toolbox/audio/speech_REF.wav";
 blockSize = 1024;
@@ -30,54 +32,73 @@ pOut = pIn + blockSize - 1;
 % Plugin parameters.
 frameSize = 2048;
 numOverlap = 4;
+hopSize = ceil(frameSize / numOverlap);
 
 buffer = zeros(frameSize, 1);
-frames = zeros(frameSize, numOverlap);
+synthBuffer = zeros(hopSize, 1);
 
-hopSize = ceil(frameSize / numOverlap);
+frameBuffers = zeros(frameSize, numOverlap);
+
 myWindow = hamming(frameSize);
+% myWindow = normalizeForUnityAtOverlap(myWindow, numOverlap);
 
-pRead = mod((0:-1:-(numOverlap - 1))' * hopSize + 1, frameSize);
-pFrame = 1;
+pBufferWrite = 1;
+pSynthRead = 1;
+pNewestFrame = 1;
 
-figure();
 for b = 1:numBlocks
     block = x(pIn:pOut);
 
     % `processBlock()`
     for n = 1:blockSize
 
-        buffer(pRead(1)) = block(n);
+        buffer(pBufferWrite) = block(n);
 
-        for f = 1:numOverlap
-            % Read into each frame, and window at the same time.
-            frames(pRead(1), f) = buffer(pRead(f));
-        end
+        if mod(pBufferWrite, hopSize) == 1
 
-        if pFrame == frameSize
+            frameBuffers(:, pNewestFrame) = circshift(buffer, -pBufferWrite);
+            frameBuffers(:, pNewestFrame) = frameBuffers(:, pNewestFrame) .* myWindow;
 
-            frames = frames .* myWindow(pFrame);
+            % Do frame processing here before updating newest frame number.
 
-            % Synthesis buffer has to factor in somehow.
-            for f = 1:numOverlap
-                subplot(numOverlap, 1, f);
-                plot(frames(:, f));
-                hold on;
-                plot(pFrame, 0, "*");
-                hold off;
-                xlabel("Time (samples)");
-                ylabel("Amplitude");
-                ylim([-.25, .25]);
+            if doPlots
+                figure(2);
+                for f = 1:numOverlap
+                    subplot(numOverlap, 1, f);
+    
+    
+                    plotColor = 'b';
+                    if f == pNewestFrame
+                        plotColor = 'r';
+                    end
+    
+                    plot(frameBuffers(:, f), plotColor);
+                    ylim([-1, 1]);
+                end
             end
 
-            pause();
+            synthBuffer = fillSynthBuffer(frameBuffers, pNewestFrame, numOverlap, hopSize);
+
+            if doPlots
+                figure(3);
+                plot(synthBuffer);
+                ylim([-1, 1]);
+                pause();
+            end
+
+            % Then advance frame pointer.
+            pNewestFrame = mod(pNewestFrame, numOverlap) + 1;
         end
 
-        pRead = mod(pRead, frameSize) + 1;
-        pFrame = mod(pFrame, frameSize) + 1;
+        block(n) = synthBuffer(pSynthRead);
+
+        pBufferWrite = mod(pBufferWrite, frameSize) + 1;
+        pSynthRead = mod(pSynthRead, hopSize) + 1;
+        
     end
 
     x(pIn:pOut) = block;
+
     pIn = pIn + blockSize;
     pOut = pOut + blockSize;
 end
@@ -86,3 +107,33 @@ plot(ax, time, x, "DisplayName", "out");
 xlabel("Time (s)");
 ylabel("Amplitude");
 legend(ax);
+
+function someWindow = normalizeForUnityAtOverlap(someWindow, numOverlap)
+    
+    frameSize = length(someWindow);
+    tmp = 0; 
+    for p = 0:(numOverlap - 1)
+        tmp = tmp + someWindow(frameSize / numOverlap * p + 1);
+    end
+
+    someWindow = someWindow / tmp;
+
+end
+
+function synthBuffer = fillSynthBuffer(frameBuffers, pNewestFrame, numOverlap, hopSize)
+
+    synthBuffer = zeros(hopSize, 1);
+
+    frameOrder = pNewestFrame:(pNewestFrame + numOverlap - 1);
+    frameOrder = mod(frameOrder - 1, numOverlap) + 1;
+
+    pIn = 1;
+    pOut = hopSize;
+    for f = frameOrder
+        synthBuffer = synthBuffer + frameBuffers(pIn:pOut, f);
+
+        pIn = pIn + hopSize;
+        pOut = pOut + hopSize;
+    end
+
+end
