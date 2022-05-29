@@ -5,9 +5,8 @@
               splashScreenColour="Light" pluginAUIsSandboxSafe="1">
   <MAINGROUP id="VbCc9H" name="FftBuffer">
     <GROUP id="{8A9540A2-F470-E88A-7CCC-1DFC79141D0C}" name="Source">
-      <FILE id="goCL7w" name="LockFreeQueue.cpp" compile="1" resource="0"
-            file="Source/LockFreeQueue.cpp"/>
-      <FILE id="iCZD28" name="LockFreeQueue.h" compile="0" resource="0" file="Source/LockFreeQueue.h"/>
+      <FILE id="LlTvQb" name="OlaBuffer.cpp" compile="1" resource="0" file="Source/OlaBuffer.cpp"/>
+      <FILE id="mDgFAV" name="OlaBuffer.h" compile="0" resource="0" file="Source/OlaBuffer.h"/>
       <FILE id="JiOWBv" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="q5I8Fx" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
