@@ -30,7 +30,7 @@ pIn = 1;
 pOut = pIn + blockSize - 1;
 
 % Plugin parameters.
-frameSize = 2048;
+frameSize = 256;
 numOverlap = 4;
 hopSize = ceil(frameSize / numOverlap);
 
@@ -45,8 +45,6 @@ myWindow = normalizeForUnityAtOverlap(myWindow, numOverlap);
 pBufferWrite = 1;
 pSynthRead = 1;
 pNewestFrame = 1;
-
-outBlock = zeros(blockSize, 1);
 
 for b = 1:numBlocks
     block = x(pIn:pOut);
