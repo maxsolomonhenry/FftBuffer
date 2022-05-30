@@ -22,13 +22,6 @@ FftBufferAudioProcessor::FftBufferAudioProcessor()
                        )
 #endif
 {
-    const int kFrameSize = 2048;
-    const int kNumOverlap = 4;
-    
-    int hopSize = kFrameSize / kNumOverlap;
-    int bufferSize = (2 * kNumOverlap - 1) * hopSize;
-    
-    asyncBuffer.setSize(bufferSize);
 }
 
 FftBufferAudioProcessor::~FftBufferAudioProcessor()
@@ -100,8 +93,7 @@ void FftBufferAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    // Use this method as the place to do any pre-playback
-    // initialisation that you need..
+    olaBuffer = OlaBuffer(1024, 4);
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -138,18 +130,7 @@ bool FftBufferAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 
 void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // Plugin is mono.
-    const int kChannelNo = 0;
-    auto* channelData = buffer.getWritePointer(kChannelNo);
-    
-    auto numSamples = buffer.getNumSamples();
-    
-    asyncBuffer.incrementReadPointer(numSamples);
-
-    asyncBuffer.writeTo(channelData, numSamples);
-    asyncBuffer.readFrom(channelData, numSamples);
-
-    asyncBuffer.incrementWritePointer(numSamples);
+    olaBuffer.processBlock(buffer);
 }
 
 //==============================================================================

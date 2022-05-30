@@ -9,7 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "LockFreeQueue.h"
+#include "OlaBuffer.h"
 
 //==============================================================================
 /**
@@ -55,7 +55,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    LockFreeQueue asyncBuffer;
+    OlaBuffer olaBuffer;
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
 };

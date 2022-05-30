@@ -43,7 +43,7 @@ olaBuffer = OlaBuffer(frameSize, numOverlap, frameProcesser);
 for b = 1:numBlocks
     block = x(pIn:pOut);
 
-    block = olaBuffer.process(block);
+    block = olaBuffer.processBlock(block);
 
     x(pIn:pOut) = block;
 
