@@ -22,14 +22,14 @@ private:
     int hopSize;
     
     std::vector<float> delayBuffer;
-    std::vector<float> addBuffer;
+    std::vector<float> overlapAddBuffer;
     std::vector<std::vector<float>> frameBuffers;
     std::vector<float> newestFrame;
     
     int pDelayBuffer;
-    int pAddBuffer;
+    int pOverlapAddBuffer;
     int pNewestFrame;
     
     void fillNewestFrameFromDelayBuffer();
-    void fillAddBuffer();
+    void fillOverlapAddBuffer();
 };

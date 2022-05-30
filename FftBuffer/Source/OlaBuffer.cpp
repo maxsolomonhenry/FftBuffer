@@ -25,12 +25,12 @@ void OlaBuffer::initOlaBuffer()
     hopSize = frameSize / numOverlap;
     
     delayBuffer.resize(frameSize, 0.0);
-    addBuffer.resize(hopSize, 0.0);
+    overlapAddBuffer.resize(hopSize, 0.0);
     frameBuffers.resize(numOverlap, std::vector<float>(frameSize, 0.0));
     newestFrame.resize(frameSize, 0.0);
     
     pDelayBuffer = 0;
-    pAddBuffer = 0;
+    pOverlapAddBuffer = 0;
     pNewestFrame = 0;
 }
 
@@ -61,6 +61,9 @@ void OlaBuffer::process(float& x)
         fillNewestFrameFromDelayBuffer();
         
         // Any processing to newest frame would be here.
+        //
+        // For now, simple gain adjust to compensate for OLA.
+        
         float numOverlapAsFloat = static_cast<float>(numOverlap);
         
         for (int n = 0; n < frameSize; ++n)
@@ -69,20 +72,21 @@ void OlaBuffer::process(float& x)
         }
         
         frameBuffers[pNewestFrame].assign(newestFrame.begin(), newestFrame.end());
-        fillAddBuffer();
+        fillOverlapAddBuffer();
 
         pNewestFrame = (pNewestFrame + 1) % numOverlap;
     }
     
-    x = addBuffer[pAddBuffer];
+    x = overlapAddBuffer[pOverlapAddBuffer];
     
     pDelayBuffer = (pDelayBuffer + 1) % frameSize;
-    pAddBuffer = (pAddBuffer + 1) % hopSize;
+    pOverlapAddBuffer = (pOverlapAddBuffer + 1) % hopSize;
 }
 
-void OlaBuffer::fillAddBuffer()
+void OlaBuffer::fillOverlapAddBuffer()
 {
-    std::fill(addBuffer.begin(), addBuffer.end(), 0.0);
+    // Overlap, add and store the `hopSize`-length part where all frames overlap.
+    std::fill(overlapAddBuffer.begin(), overlapAddBuffer.end(), 0.0);
     
     int pIn = 0;
     
@@ -94,7 +98,7 @@ void OlaBuffer::fillAddBuffer()
         int frameNo = ((pNewestFrame - n) % numOverlap + numOverlap) % numOverlap;
         
         for (int i = 0; i < hopSize; ++i)
-            addBuffer[i] += frameBuffers[frameNo][pIn + i];
+            overlapAddBuffer[i] += frameBuffers[frameNo][pIn + i];
         
         pIn += hopSize;
     }
