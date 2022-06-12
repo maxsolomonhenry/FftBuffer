@@ -7,6 +7,8 @@
 
 #pragma once
 #include "OlaBuffer.h"
+#include <JuceHeader.h>
+#include <math.h>
 
 class SimpleOlaProcessor : public OlaBuffer
 {
@@ -14,4 +16,12 @@ public:
     SimpleOlaProcessor();
     SimpleOlaProcessor(int frameSize, int numFrames);
     void processFrameBuffers() override;
+    
+private:
+    void init(int frameSize);
+    void initWindow(int frameSize);
+    
+    juce::dsp::FFT fft;
+    std::vector<float> fftBuffer;
+    std::vector<float> window;
 };

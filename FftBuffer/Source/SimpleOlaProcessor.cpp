@@ -7,21 +7,63 @@
 
 #include "SimpleOlaProcessor.h"
 
-SimpleOlaProcessor::SimpleOlaProcessor() : OlaBuffer(1024, 4) {}
+SimpleOlaProcessor::SimpleOlaProcessor()
+: OlaBuffer(1024, 4), fft (10)
+{
+    init(1024);
+}
 
 SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
-: OlaBuffer(frameSize, numFrames) {}
+: OlaBuffer(frameSize, numFrames), fft(log2(frameSize))
+{
+    init(frameSize);
+}
+
+void SimpleOlaProcessor::init(int frameSize)
+{
+    fftBuffer.resize(frameSize * 2, 0.0f);
+    initWindow(frameSize);
+}
+
+void SimpleOlaProcessor::initWindow(int frameSize)
+{
+    window.resize(frameSize);
+    
+    float N = static_cast<float>(frameSize);
+    
+    // Hamming window.
+    for (int n = 0; n < frameSize; ++n)
+        window[n] = 0.54 - 0.46 * cos(2.0 * M_PI * static_cast<float>(n) / N);
+}
 
 void SimpleOlaProcessor::processFrameBuffers()
 {
-    // Any processing to newest frame would be here.
-    //
-    // For now, simple gain adjust to compensate for OLA.
+    // Alias for clarity.
+    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
+    
+    std::copy(newestFrame.begin(), newestFrame.end(), fftBuffer.begin());
+        
+    fft.performRealOnlyForwardTransform(fftBuffer.data());
     
     float numOverlapAsFloat = static_cast<float>(numOverlap);
     
-    for (int n = 0; n < frameSize; ++n)
+    // Very simple "spectral" processing.
+    const int kCutoffBin = floor(fftBuffer.size() / 16);
+    
+    for (int n = 0; n < fftBuffer.size(); ++n)
     {
-        frameBuffers[pNewestFrame][n] /= numOverlapAsFloat;
+        fftBuffer[n] /= numOverlapAsFloat;
+        
+        // "Lowpass," erm..., "filter."
+        if (n >= kCutoffBin)
+            fftBuffer[n] = 0.0f;
     }
+    
+    fft.performRealOnlyInverseTransform(fftBuffer.data());
+    std::copy(fftBuffer.begin(), fftBuffer.begin() + newestFrame.size(), newestFrame.begin());
+    
+    // Window before OLA.
+    for (int n = 0; n < newestFrame.size(); ++n)
+        newestFrame[n] *= window[n];
+
 }
