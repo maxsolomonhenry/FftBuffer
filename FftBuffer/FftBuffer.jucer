@@ -14,6 +14,10 @@
             file="Source/PluginProcessor.cpp"/>
       <FILE id="puGyJf" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
+      <FILE id="ZlFw9R" name="SimpleOlaProcessor.cpp" compile="1" resource="0"
+            file="Source/SimpleOlaProcessor.cpp"/>
+      <FILE id="XeyfnC" name="SimpleOlaProcessor.h" compile="0" resource="0"
+            file="Source/SimpleOlaProcessor.h"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>

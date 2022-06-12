@@ -9,7 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "OlaBuffer.h"
+#include "SimpleOlaProcessor.h"
 
 //==============================================================================
 /**
@@ -55,7 +55,7 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    OlaBuffer olaBuffer;
+    SimpleOlaProcessor olaProcessor;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)

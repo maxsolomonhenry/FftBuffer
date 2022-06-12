@@ -12,11 +12,13 @@ class OlaBuffer
 public:
     OlaBuffer();
     OlaBuffer(int frameSize, int numOverlap);
+    virtual ~OlaBuffer();
+    
     void processBlock(juce::AudioBuffer<float> &block);
     void process(float& x);
     void initOlaBuffer();
     
-private:
+protected:
     int frameSize;
     int numOverlap;
     int hopSize;
@@ -24,12 +26,12 @@ private:
     std::vector<float> delayBuffer;
     std::vector<float> overlapAddBuffer;
     std::vector<std::vector<float>> frameBuffers;
-    std::vector<float> newestFrame;
     
     int pDelayBuffer;
     int pOverlapAddBuffer;
     int pNewestFrame;
     
-    void fillNewestFrameFromDelayBuffer();
+    void fillFrameFromDelayBuffer(std::vector<float> &frame);
     void fillOverlapAddBuffer();
+    virtual void processFrameBuffers();
 };

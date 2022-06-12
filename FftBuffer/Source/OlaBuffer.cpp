@@ -20,6 +20,8 @@ OlaBuffer::OlaBuffer()
     initOlaBuffer();
 }
 
+OlaBuffer::~OlaBuffer() {}
+
 void OlaBuffer::initOlaBuffer()
 {
     hopSize = frameSize / numOverlap;
@@ -27,7 +29,6 @@ void OlaBuffer::initOlaBuffer()
     delayBuffer.resize(frameSize, 0.0);
     overlapAddBuffer.resize(hopSize, 0.0);
     frameBuffers.resize(numOverlap, std::vector<float>(frameSize, 0.0));
-    newestFrame.resize(frameSize, 0.0);
     
     pDelayBuffer = 0;
     pOverlapAddBuffer = 0;
@@ -58,20 +59,14 @@ void OlaBuffer::process(float& x)
     
     if (isThisHopComplete)
     {
-        fillNewestFrameFromDelayBuffer();
+        std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
         
-        // Any processing to newest frame would be here.
-        //
-        // For now, simple gain adjust to compensate for OLA.
+        fillFrameFromDelayBuffer(newestFrame);
         
-        float numOverlapAsFloat = static_cast<float>(numOverlap);
-        
-        for (int n = 0; n < frameSize; ++n)
-        {
-            newestFrame[n] /= numOverlapAsFloat;
-        }
-        
-        frameBuffers[pNewestFrame].assign(newestFrame.begin(), newestFrame.end());
+        // Virtual function to be defined by inheriting class.
+        processFrameBuffers();
+
+        // OLA calculations.
         fillOverlapAddBuffer();
 
         pNewestFrame = (pNewestFrame + 1) % numOverlap;
@@ -82,6 +77,8 @@ void OlaBuffer::process(float& x)
     pDelayBuffer = (pDelayBuffer + 1) % frameSize;
     pOverlapAddBuffer = (pOverlapAddBuffer + 1) % hopSize;
 }
+
+void OlaBuffer::processFrameBuffers() {}
 
 void OlaBuffer::fillOverlapAddBuffer()
 {
@@ -104,13 +101,13 @@ void OlaBuffer::fillOverlapAddBuffer()
     }
 }
 
-void OlaBuffer::fillNewestFrameFromDelayBuffer()
+void OlaBuffer::fillFrameFromDelayBuffer(std::vector<float> &frame)
 {
     int pRead = pDelayBuffer;
     
     for (int n = 0; n < frameSize; n++)
     {
-        newestFrame[n] = delayBuffer[pRead];
+        frame[n] = delayBuffer[pRead];
         pRead = (pRead + 1) % frameSize;
     }
 }

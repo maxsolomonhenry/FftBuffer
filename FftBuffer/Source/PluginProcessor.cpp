@@ -93,7 +93,7 @@ void FftBufferAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    olaBuffer = OlaBuffer(1024, 4);
+    olaProcessor = SimpleOlaProcessor(1024, 4);
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -130,7 +130,7 @@ bool FftBufferAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 
 void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    olaBuffer.processBlock(buffer);
+    olaProcessor.processBlock(buffer);
 }
 
 //==============================================================================
