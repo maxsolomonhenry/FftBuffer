@@ -20,6 +20,8 @@ OlaBuffer::OlaBuffer()
     initOlaBuffer();
 }
 
+OlaBuffer::~OlaBuffer() {}
+
 void OlaBuffer::initOlaBuffer()
 {
     hopSize = frameSize / numOverlap;
