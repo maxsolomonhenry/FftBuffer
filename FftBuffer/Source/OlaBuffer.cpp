@@ -58,7 +58,7 @@ void OlaBuffer::process(float& x)
     
     if (isThisHopComplete)
     {
-        fillNewestFrameFromDelayBuffer();
+        fillFrameFromDelayBuffer(frameBuffers[pNewestFrame]);
         
         // Any processing to newest frame would be here.
         //
@@ -68,10 +68,9 @@ void OlaBuffer::process(float& x)
         
         for (int n = 0; n < frameSize; ++n)
         {
-            newestFrame[n] /= numOverlapAsFloat;
+            frameBuffers[pNewestFrame][n] /= numOverlapAsFloat;
         }
-        
-        frameBuffers[pNewestFrame].assign(newestFrame.begin(), newestFrame.end());
+
         fillOverlapAddBuffer();
 
         pNewestFrame = (pNewestFrame + 1) % numOverlap;
@@ -104,13 +103,13 @@ void OlaBuffer::fillOverlapAddBuffer()
     }
 }
 
-void OlaBuffer::fillNewestFrameFromDelayBuffer()
+void OlaBuffer::fillFrameFromDelayBuffer(std::vector<float> &frame)
 {
     int pRead = pDelayBuffer;
     
     for (int n = 0; n < frameSize; n++)
     {
-        newestFrame[n] = delayBuffer[pRead];
+        frame[n] = delayBuffer[pRead];
         pRead = (pRead + 1) % frameSize;
     }
 }

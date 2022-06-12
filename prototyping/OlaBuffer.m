@@ -49,9 +49,9 @@ classdef OlaBuffer < handle
     
             if mod(obj.pDelayBuffer, obj.hopSize) == 1
     
-                newestFrame = obj.fillNewestFrameFromDelayBuffer();
+                obj.frameBuffers(:, obj.pNewestFrame) = obj.fillNewestFrameFromDelayBuffer();
 
-                obj.frameBuffers(:, obj.pNewestFrame) = obj.frameProcesser(newestFrame);
+                obj.frameBuffers(:, obj.pNewestFrame) = obj.frameProcesser(obj.frameBuffers(:, obj.pNewestFrame));
 
                 obj.fillAddBuffer();
                 obj.pNewestFrame = mod(obj.pNewestFrame, obj.numOverlap) + 1;

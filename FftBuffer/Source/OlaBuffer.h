@@ -30,6 +30,6 @@ private:
     int pOverlapAddBuffer;
     int pNewestFrame;
     
-    void fillNewestFrameFromDelayBuffer();
+    void fillFrameFromDelayBuffer(std::vector<float> &frame);
     void fillOverlapAddBuffer();
 };
