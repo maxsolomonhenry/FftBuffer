@@ -59,10 +59,14 @@ void OlaBuffer::process(float& x)
     
     if (isThisHopComplete)
     {
-        fillFrameFromDelayBuffer(frameBuffers[pNewestFrame]);
+        std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
         
+        fillFrameFromDelayBuffer(newestFrame);
+        
+        // Virtual function to be defined by inheriting class.
         processFrameBuffers();
 
+        // OLA calculations.
         fillOverlapAddBuffer();
 
         pNewestFrame = (pNewestFrame + 1) % numOverlap;
