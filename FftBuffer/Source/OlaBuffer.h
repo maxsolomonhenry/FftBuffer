@@ -26,7 +26,6 @@ protected:
     std::vector<float> delayBuffer;
     std::vector<float> overlapAddBuffer;
     std::vector<std::vector<float>> frameBuffers;
-    std::vector<float> newestFrame;
     
     int pDelayBuffer;
     int pOverlapAddBuffer;

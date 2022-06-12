@@ -8,10 +8,10 @@
 #pragma once
 #include "OlaBuffer.h"
 
-class SimpleOlaProcesser : public OlaBuffer
+class SimpleOlaProcessor : public OlaBuffer
 {
 public:
-    SimpleOlaProcesser();
-    SimpleOlaProcesser(int frameSize, int numFrames);
+    SimpleOlaProcessor();
+    SimpleOlaProcessor(int frameSize, int numFrames);
     void processFrameBuffers() override;
 };

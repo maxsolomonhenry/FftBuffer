@@ -7,17 +7,12 @@
 
 #include "SimpleOlaProcessor.h"
 
-SimpleOlaProcesser::SimpleOlaProcesser()
-: OlaBuffer(1024, 4)
-{
-}
+SimpleOlaProcessor::SimpleOlaProcessor() : OlaBuffer(1024, 4) {}
 
-SimpleOlaProcesser::SimpleOlaProcesser(int frameSize, int numFrames)
-: OlaBuffer(frameSize, numFrames)
-{
-}
+SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
+: OlaBuffer(frameSize, numFrames) {}
 
-void SimpleOlaProcesser::processFrameBuffers()
+void SimpleOlaProcessor::processFrameBuffers()
 {
     // Any processing to newest frame would be here.
     //
