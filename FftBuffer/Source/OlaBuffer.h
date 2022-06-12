@@ -32,4 +32,5 @@ private:
     
     void fillFrameFromDelayBuffer(std::vector<float> &frame);
     void fillOverlapAddBuffer();
+    void processFrameBuffers();
 };
