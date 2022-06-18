@@ -35,22 +35,6 @@ void OlaBuffer::initOlaBuffer()
     pNewestFrame = 0;
 }
 
-void OlaBuffer::processBlock(juce::AudioBuffer<float> &block)
-{
-    // Convenience wrapper for block-based processing.
-    
-    // Plugin is mono.
-    const int kChannelNo = 0;
-    
-    auto* channelData = block.getWritePointer(kChannelNo);
-    auto numSamples = block.getNumSamples();
-    
-    for (int n = 0; n < numSamples; ++n)
-    {
-        process(channelData[n]);
-    }
-}
-
 void OlaBuffer::process(float& x)
 {
     delayBuffer[pDelayBuffer] = x;

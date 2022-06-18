@@ -13,8 +13,7 @@ public:
     OlaBuffer();
     OlaBuffer(int frameSize, int numOverlap);
     virtual ~OlaBuffer();
-    
-    void processBlock(juce::AudioBuffer<float> &block);
+
     void process(float& x);
     void initOlaBuffer();
     
