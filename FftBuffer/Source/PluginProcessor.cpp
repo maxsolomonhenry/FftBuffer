@@ -20,6 +20,7 @@ FftBufferAudioProcessor::FftBufferAudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::mono(), true)
                      #endif
                        )
+    , params(*this, nullptr, "PARAMETERS", createParameters() )
 #endif
 {
 }
@@ -132,9 +133,15 @@ bool FftBufferAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 
 void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
+    
     for (int i = 0; i < buffer.getNumChannels(); ++i)
+    {
+        olaProcessor[i].setIsEffectRequested(isFreezeOn);
+        
         for (int j = 0; j < buffer.getNumSamples(); ++j)
             olaProcessor[i].process(buffer.getWritePointer(i)[j]);
+    }
 }
 
 //==============================================================================
@@ -167,4 +174,13 @@ void FftBufferAudioProcessor::setStateInformation (const void* data, int sizeInB
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new FftBufferAudioProcessor();
+}
+
+juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::createParameters()
+{
+    std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
+    
+    params.push_back(std::make_unique<juce::AudioParameterBool>("FREEZE", "Freeze", false));
+    
+    return { params.begin(), params.end() };
 }

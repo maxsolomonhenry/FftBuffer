@@ -21,6 +21,7 @@ SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
 
 void SimpleOlaProcessor::init(int frameSize)
 {
+    isEffectRequested = false;
     fftBuffer.resize(frameSize * 2, 0.0f);
     initWindow(frameSize);
 }
@@ -48,16 +49,18 @@ void SimpleOlaProcessor::processFrameBuffers()
     float numOverlapAsFloat = static_cast<float>(numOverlap);
     
     // Very simple "spectral" processing.
-    const int kCutoffBin = floor(fftBuffer.size() / 16);
+    const int kCutoffBin = floor(fftBuffer.size() / 32);
     
-    for (int n = 0; n < fftBuffer.size(); ++n)
+    if (isEffectRequested)
     {
-        fftBuffer[n] /= numOverlapAsFloat;
-        
-        // "Lowpass," erm..., "filter."
-        if (n >= kCutoffBin)
+        for (int n = kCutoffBin; n < fftBuffer.size(); ++n)
             fftBuffer[n] = 0.0f;
     }
+    
+    for (int n = 0; n < fftBuffer.size(); ++n)
+        fftBuffer[n] /= numOverlapAsFloat;
+    
+    
     
     fft.performRealOnlyInverseTransform(fftBuffer.data());
     std::copy(fftBuffer.begin(), fftBuffer.begin() + newestFrame.size(), newestFrame.begin());
@@ -66,4 +69,13 @@ void SimpleOlaProcessor::processFrameBuffers()
     for (int n = 0; n < newestFrame.size(); ++n)
         newestFrame[n] *= window[n];
 
+}
+
+void SimpleOlaProcessor::setIsEffectRequested(bool input)
+{
+    bool isSame = (input == isEffectRequested);
+    
+    if (!isSame)
+        isEffectRequested = input;
+        
 }

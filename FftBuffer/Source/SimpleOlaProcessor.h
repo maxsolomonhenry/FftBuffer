@@ -16,6 +16,7 @@ public:
     SimpleOlaProcessor();
     SimpleOlaProcessor(int frameSize, int numFrames);
     void processFrameBuffers() override;
+    void setIsEffectRequested(bool input);
     
 private:
     void init(int frameSize);
@@ -24,4 +25,6 @@ private:
     juce::dsp::FFT fft;
     std::vector<float> fftBuffer;
     std::vector<float> window;
+    
+    bool isEffectRequested;
 };
