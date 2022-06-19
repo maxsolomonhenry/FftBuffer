@@ -21,9 +21,13 @@ public:
 private:
     void init(int frameSize);
     void initWindow(int frameSize);
+    void initFftBuffer(int frameSize);
+    void convertToMagnitudeAndPhase(std::vector<float> &X);
+    
+    int nonnegativeModulus(int i, int n);
     
     juce::dsp::FFT fft;
-    std::vector<float> fftBuffer;
+    std::vector<std::vector<float>> fftBuffer;
     std::vector<float> window;
     
     bool isEffectRequested;

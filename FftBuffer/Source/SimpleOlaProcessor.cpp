@@ -22,9 +22,15 @@ SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
 void SimpleOlaProcessor::init(int frameSize)
 {
     isEffectRequested = false;
-    fftBuffer.resize(frameSize * 2, 0.0f);
     initWindow(frameSize);
+    initFftBuffer(frameSize);
 }
+
+void SimpleOlaProcessor::initFftBuffer(int frameSize)
+{
+    fftBuffer.resize(2, std::vector<float>(frameSize * 2, 0.0f));
+}
+
 
 void SimpleOlaProcessor::initWindow(int frameSize)
 {
@@ -39,35 +45,30 @@ void SimpleOlaProcessor::initWindow(int frameSize)
 
 void SimpleOlaProcessor::processFrameBuffers()
 {
-    // Alias for clarity.
-    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
-    
-    std::copy(newestFrame.begin(), newestFrame.end(), fftBuffer.begin());
-        
-    fft.performRealOnlyForwardTransform(fftBuffer.data());
-    
-    float numOverlapAsFloat = static_cast<float>(numOverlap);
-    
-    // Very simple "spectral" processing.
-    const int kCutoffBin = floor(fftBuffer.size() / 32);
-    
-    if (isEffectRequested)
+    if (!isEffectRequested)
+        return;
+
+    // Forward FFT on current and previous frame.
+    for (int n = 0; n < 2; ++n)
     {
-        for (int n = kCutoffBin; n < fftBuffer.size(); ++n)
-            fftBuffer[n] = 0.0f;
+        int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
+        std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
+        
+        std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
+        
+        fft.performRealOnlyForwardTransform(fftBuffer[n].data());
+        convertToMagnitudeAndPhase(fftBuffer[n]);
     }
-    
-    for (int n = 0; n < fftBuffer.size(); ++n)
-        fftBuffer[n] /= numOverlapAsFloat;
+        
     
     
-    
-    fft.performRealOnlyInverseTransform(fftBuffer.data());
-    std::copy(fftBuffer.begin(), fftBuffer.begin() + newestFrame.size(), newestFrame.begin());
-    
-    // Window before OLA.
-    for (int n = 0; n < newestFrame.size(); ++n)
-        newestFrame[n] *= window[n];
+
+//    fft.performRealOnlyInverseTransform(fftBuffer.data());
+//    std::copy(fftBuffer.begin(), fftBuffer.begin() + newestFrame.size(), newestFrame.begin());
+//
+//    // Window before OLA.
+//    for (int n = 0; n < newestFrame.size(); ++n)
+//        newestFrame[n] *= window[n];
 
 }
 
@@ -78,4 +79,28 @@ void SimpleOlaProcessor::setIsEffectRequested(bool input)
     if (!isSame)
         isEffectRequested = input;
         
+}
+
+int SimpleOlaProcessor::nonnegativeModulus(int i, int n)
+{
+    // Positive-only modulus:
+    //
+    // https://stackoverflow.com/questions/14997165/fastest-way-to-get-a-positive-modulo-in-c-c
+    
+    return (i % n + n) % n;
+}
+
+void SimpleOlaProcessor::convertToMagnitudeAndPhase(std::vector<float> &X)
+{
+    for (int n = 0; n < X.size(); n += 2)
+    {
+        float real = X[n];
+        float imaginary = X[n + 1];
+        
+        float magnitude = sqrt( pow(real, 2) + pow(imaginary, 2) );
+        float phase = atan(imaginary / real);
+        
+        X[n] = magnitude;
+        X[n + 1] = phase;
+    }
 }
