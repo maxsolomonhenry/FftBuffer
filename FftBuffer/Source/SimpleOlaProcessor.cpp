@@ -69,7 +69,15 @@ void SimpleOlaProcessor::processFrameBuffers()
         int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
         std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
         
+        // Remove window from old frame before analysis.
+        if (n == 1)
+        {
+            for (int i = 0; i < frameOfInterest.size(); ++i)
+                frameOfInterest[i] /= window[i];
+        }
+        
         std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
+
         
         fft.performRealOnlyForwardTransform(fftBuffer[n].data());
         convertToMagnitudeAndPhase(fftBuffer[n]);
@@ -120,11 +128,11 @@ void SimpleOlaProcessor::processFrameBuffers()
         std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameOfInterest.size(), frameOfInterest.begin());
     }
     
-//    // Window before OLA.
-//    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
-//
-//    for (int i = 0; i < newestFrame.size(); ++i)
-//        newestFrame[i] *= window[i];
+    // Window before OLA.
+    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
+
+    for (int i = 0; i < newestFrame.size(); ++i)
+        newestFrame[i] *= window[i];
 }
 
 void SimpleOlaProcessor::setIsEffectRequested(bool input)
