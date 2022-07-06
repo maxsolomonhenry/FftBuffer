@@ -19,9 +19,10 @@ public:
     void setIsEffectRequested(bool input);
     
 private:
-    void init(int frameSize);
+    void init(int frameSize, int numFrames);
     void initWindow(int frameSize);
     void initFftBuffer(int frameSize);
+    void initPhaseAdvanceAndPhaseDelta(int frameSize, int numFrames);
     void convertToMagnitudeAndPhase(std::vector<float> &X);
     void convertToPolar(std::vector<float> &X);
     
@@ -29,6 +30,8 @@ private:
     
     juce::dsp::FFT fft;
     std::vector<std::vector<float>> fftBuffer;
+    std::vector<float> phaseAdvance;
+    std::vector<float> phaseDelta;
     std::vector<float> window;
     
     bool isEffectRequested;

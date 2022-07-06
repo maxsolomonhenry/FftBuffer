@@ -96,7 +96,7 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
 {
     // Build one processor per channel.
     for (int i = 0; i < getTotalNumInputChannels(); ++i)
-        olaProcessor.push_back(SimpleOlaProcessor(1024, 4));
+        olaProcessor.push_back(SimpleOlaProcessor(4096, 4));
 }
 
 void FftBufferAudioProcessor::releaseResources()

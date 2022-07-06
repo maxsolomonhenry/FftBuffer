@@ -10,20 +10,37 @@
 SimpleOlaProcessor::SimpleOlaProcessor()
 : OlaBuffer(1024, 4), fft (10)
 {
-    init(1024);
+    init(1024, 4);
 }
 
 SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
 : OlaBuffer(frameSize, numFrames), fft(log2(frameSize))
 {
-    init(frameSize);
+    init(frameSize, numFrames);
 }
 
-void SimpleOlaProcessor::init(int frameSize)
+void SimpleOlaProcessor::init(int frameSize, int numFrames)
 {
     isEffectRequested = false;
     initWindow(frameSize);
     initFftBuffer(frameSize);
+    initPhaseAdvanceAndPhaseDelta(frameSize, numFrames);
+}
+
+void SimpleOlaProcessor::initPhaseAdvanceAndPhaseDelta(int frameSize, int numFrames)
+{
+    // Half frame size.
+    int hN = frameSize / 2;
+    
+    phaseAdvance.resize(hN);
+    phaseDelta.resize(hN);
+    
+    float hopFraction = (1.0 / static_cast<float>(numFrames));
+    
+    for (int n = 0; n < hN; ++n)
+    {
+        phaseAdvance[n] = 2 * M_PI * hopFraction * n;
+    }
 }
 
 void SimpleOlaProcessor::initFftBuffer(int frameSize)
@@ -46,31 +63,68 @@ void SimpleOlaProcessor::initWindow(int frameSize)
 void SimpleOlaProcessor::processFrameBuffers()
 {
 
-    // Forward FFT on current and previous frame.
+    // Convert adjacent frames to magnitude and phase.
     for (int n = 0; n < 2; ++n)
     {
         int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
-        
         std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
         
-        if (isEffectRequested)
-        {
-            std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
-            
-            // Current does nothing -- fft, convert rect -> polar -> rect, ifft.
-            fft.performRealOnlyForwardTransform(fftBuffer[n].data());
-            convertToMagnitudeAndPhase(fftBuffer[n]);
-            convertToPolar(fftBuffer[n]);
-            fft.performRealOnlyInverseTransform(fftBuffer[n].data());
-            
-            std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameOfInterest.size(), frameOfInterest.begin());
-        }
-            
-        // Window before OLA.
-        for (int i = 0; i < frameOfInterest.size(); ++i)
-            frameOfInterest[i] *= window[i];
-
+        std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
+        
+        fft.performRealOnlyForwardTransform(fftBuffer[n].data());
+        convertToMagnitudeAndPhase(fftBuffer[n]);
     }
+    
+    
+    // Calculate phase difference (for instantaneous frequency).
+    std::vector<float>& newSpectrum = fftBuffer[0];
+    std::vector<float>& lastSpectrum = fftBuffer[1];
+    
+    if (isEffectRequested)
+    {
+        // Replace new magnitude with last magnitude.
+        for (int n = 0; n < phaseDelta.size(); ++n)
+        {
+            int magIdx = 2 * n;
+            
+            newSpectrum[magIdx] = lastSpectrum[magIdx];
+        }
+        
+        // Replace new phase with last + delta.
+        for (int n = 0; n < phaseDelta.size(); ++n)
+        {
+            int phaseIdx = 2 * n + 1;
+            
+            newSpectrum[phaseIdx] = lastSpectrum[phaseIdx] + phaseDelta[n];
+        }
+    }
+    else
+    {
+        // Update "freeze" phase advance.
+        for (int n = 0; n < phaseDelta.size(); ++n)
+        {
+            int phaseIdx = 2 * n + 1;
+            phaseDelta[n] = newSpectrum[phaseIdx] - lastSpectrum[phaseIdx];
+        }
+    }
+    
+    // Convert back to polar, then back to time.
+    for (int n = 0; n < 2; ++n)
+    {
+        int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
+        std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
+                
+        convertToPolar(fftBuffer[n]);
+        fft.performRealOnlyInverseTransform(fftBuffer[n].data());
+                
+        std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameOfInterest.size(), frameOfInterest.begin());
+    }
+    
+    // Window before OLA.
+    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
+    
+    for (int i = 0; i < newestFrame.size(); ++i)
+        newestFrame[i] *= window[i];
 }
 
 void SimpleOlaProcessor::setIsEffectRequested(bool input)
