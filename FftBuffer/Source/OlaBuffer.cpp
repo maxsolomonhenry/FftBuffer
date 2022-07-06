@@ -56,8 +56,10 @@ void OlaBuffer::process(float& x)
         pNewestFrame = (pNewestFrame + 1) % numOverlap;
     }
     
+    // Grab output sample from overlap buffer.
     x = overlapAddBuffer[pOverlapAddBuffer];
     
+    // Increment pointers.
     pDelayBuffer = (pDelayBuffer + 1) % frameSize;
     pOverlapAddBuffer = (pOverlapAddBuffer + 1) % hopSize;
 }

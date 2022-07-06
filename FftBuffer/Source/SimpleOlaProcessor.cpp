@@ -45,31 +45,32 @@ void SimpleOlaProcessor::initWindow(int frameSize)
 
 void SimpleOlaProcessor::processFrameBuffers()
 {
-    if (!isEffectRequested)
-        return;
 
     // Forward FFT on current and previous frame.
     for (int n = 0; n < 2; ++n)
     {
         int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
+        
         std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
         
-        std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
-        
-        fft.performRealOnlyForwardTransform(fftBuffer[n].data());
-        convertToMagnitudeAndPhase(fftBuffer[n]);
+        if (isEffectRequested)
+        {
+            std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
+            
+            // Current does nothing -- fft, convert rect -> polar -> rect, ifft.
+            fft.performRealOnlyForwardTransform(fftBuffer[n].data());
+            convertToMagnitudeAndPhase(fftBuffer[n]);
+            convertToPolar(fftBuffer[n]);
+            fft.performRealOnlyInverseTransform(fftBuffer[n].data());
+            
+            std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameOfInterest.size(), frameOfInterest.begin());
+        }
+            
+        // Window before OLA.
+        for (int i = 0; i < frameOfInterest.size(); ++i)
+            frameOfInterest[i] *= window[i];
+
     }
-        
-    
-    
-
-//    fft.performRealOnlyInverseTransform(fftBuffer.data());
-//    std::copy(fftBuffer.begin(), fftBuffer.begin() + newestFrame.size(), newestFrame.begin());
-//
-//    // Window before OLA.
-//    for (int n = 0; n < newestFrame.size(); ++n)
-//        newestFrame[n] *= window[n];
-
 }
 
 void SimpleOlaProcessor::setIsEffectRequested(bool input)
@@ -98,9 +99,24 @@ void SimpleOlaProcessor::convertToMagnitudeAndPhase(std::vector<float> &X)
         float imaginary = X[n + 1];
         
         float magnitude = sqrt( pow(real, 2) + pow(imaginary, 2) );
-        float phase = atan(imaginary / real);
+        float phase = atan2(imaginary, real);
         
         X[n] = magnitude;
         X[n + 1] = phase;
+    }
+}
+
+void SimpleOlaProcessor::convertToPolar(std::vector<float> &X)
+{
+    for (int n = 0; n < X.size(); n += 2)
+    {
+        float magnitude = X[n];
+        float phase = X[n + 1];
+        
+        float real = magnitude * cos(phase);
+        float imaginary = magnitude * sin(phase);
+        
+        X[n] = real;
+        X[n + 1] = imaginary;
     }
 }

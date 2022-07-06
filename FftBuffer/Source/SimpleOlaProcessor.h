@@ -23,6 +23,7 @@ private:
     void initWindow(int frameSize);
     void initFftBuffer(int frameSize);
     void convertToMagnitudeAndPhase(std::vector<float> &X);
+    void convertToPolar(std::vector<float> &X);
     
     int nonnegativeModulus(int i, int n);
     
