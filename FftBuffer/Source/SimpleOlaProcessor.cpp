@@ -120,11 +120,11 @@ void SimpleOlaProcessor::processFrameBuffers()
         std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameOfInterest.size(), frameOfInterest.begin());
     }
     
-    // Window before OLA.
-    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
-    
-    for (int i = 0; i < newestFrame.size(); ++i)
-        newestFrame[i] *= window[i];
+//    // Window before OLA.
+//    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
+//
+//    for (int i = 0; i < newestFrame.size(); ++i)
+//        newestFrame[i] *= window[i];
 }
 
 void SimpleOlaProcessor::setIsEffectRequested(bool input)
