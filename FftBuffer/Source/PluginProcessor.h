@@ -55,8 +55,9 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     juce::AudioProcessorValueTreeState params;
     
-private:
     std::vector<SimpleOlaProcessor> olaProcessor;
+    
+private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     
     //==============================================================================

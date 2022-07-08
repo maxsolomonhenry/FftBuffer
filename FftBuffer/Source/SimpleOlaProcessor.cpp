@@ -22,6 +22,7 @@ SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
 void SimpleOlaProcessor::init(int frameSize, int numFrames)
 {
     isEffectRequested = false;
+    isWaitingToTurnBackOn = false;
     initWindow(frameSize);
     initFftBuffer(frameSize);
     initPhaseAdvanceAndPhaseDelta(frameSize, numFrames);
@@ -88,6 +89,20 @@ void SimpleOlaProcessor::processFrameBuffers()
     std::vector<float>& newSpectrum = fftBuffer[0];
     std::vector<float>& lastSpectrum = fftBuffer[1];
     
+    if (isWaitingToTurnBackOn)
+    {
+        isEffectRequested = true;
+        isWaitingToTurnBackOn = false;
+    }
+    
+    if (isRefreshRequested)
+    {
+        isRefreshRequested = false;
+        isWaitingToTurnBackOn = true;
+        isEffectRequested = false;
+    }
+    
+    
     if (isEffectRequested)
     {
         // Replace new magnitude with last magnitude.
@@ -141,7 +156,14 @@ void SimpleOlaProcessor::setIsEffectRequested(bool input)
     
     if (!isSame)
         isEffectRequested = input;
-        
+}
+
+void SimpleOlaProcessor::setIsRefreshRequested(bool input)
+{
+    bool isSame = (input == isRefreshRequested);
+    
+    if (!isSame)
+        isRefreshRequested = input;
 }
 
 int SimpleOlaProcessor::nonnegativeModulus(int i, int n)

@@ -18,7 +18,17 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     
     freezeButtonAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.params, "FREEZE", freezeButton);
     
-    setSize (400, 300);
+    refreshButton.setButtonText("Refresh");
+    addAndMakeVisible(refreshButton);
+    
+    refreshButton.onClick = [this]
+    {
+        for (int i = 0; i < audioProcessor.olaProcessor.size(); ++i )
+            audioProcessor.olaProcessor[i].setIsRefreshRequested(true);
+        
+    };
+
+    setSize (400, 400);
 }
 
 FftBufferAudioProcessorEditor::~FftBufferAudioProcessorEditor()
@@ -34,8 +44,10 @@ void FftBufferAudioProcessorEditor::paint (juce::Graphics& g)
 
 void FftBufferAudioProcessorEditor::resized()
 {
-    int freezeWidth = 100;
-    int freezeHeight = 100;
+    int spacing = 30;
+    int itemWidth = 100;
+    int itemHeight = 100;
     
-    freezeButton.setBounds((getWidth() - freezeWidth) / 2, (getHeight() - freezeHeight) / 2, freezeWidth, freezeHeight);
+    freezeButton.setBounds((getWidth() - itemWidth) / 2, getHeight() / 2 + itemHeight / 2, itemWidth, itemHeight);
+    refreshButton.setBounds((getWidth() - itemWidth) / 2, getHeight() / 2 - itemHeight / 2, itemWidth, itemHeight);
 }

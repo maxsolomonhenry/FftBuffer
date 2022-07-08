@@ -26,6 +26,7 @@ public:
 
 private:
     juce::ToggleButton freezeButton;
+    juce::TextButton refreshButton;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> freezeButtonAttachment;
 

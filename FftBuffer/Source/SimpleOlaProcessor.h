@@ -16,7 +16,9 @@ public:
     SimpleOlaProcessor();
     SimpleOlaProcessor(int frameSize, int numFrames);
     void processFrameBuffers() override;
+    
     void setIsEffectRequested(bool input);
+    void setIsRefreshRequested(bool input);
     
 private:
     void init(int frameSize, int numFrames);
@@ -35,4 +37,6 @@ private:
     std::vector<float> window;
     
     bool isEffectRequested;
+    bool isRefreshRequested;
+    bool isWaitingToTurnBackOn;
 };
