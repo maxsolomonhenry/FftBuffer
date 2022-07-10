@@ -25,7 +25,7 @@ void SimpleOlaProcessor::init(int frameSize, int numFrames)
     initWindow(frameSize);
     initFftBuffer(frameSize);
     initPhaseAdvanceAndPhaseDelta(frameSize, numFrames);
-    
+
     ctrRefresh = kNumRefreshFrames;
 }
 
@@ -83,8 +83,6 @@ void SimpleOlaProcessor::processFrameBuffers()
         fft.performRealOnlyForwardTransform(fftBuffer[n].data());
         convertToMagnitudeAndPhase(fftBuffer[n]);
     }
-    
-    
     
     if (isRefreshRequested)
     {

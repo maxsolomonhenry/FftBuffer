@@ -135,7 +135,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 {
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
     
-    for (int i = 0; i < buffer.getNumChannels(); ++i)
+    for (int i = 0; i < olaProcessor.size(); ++i)
     {
         olaProcessor[i].setIsEffectRequested(isFreezeOn);
         
@@ -180,7 +180,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::cre
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
     
-    params.push_back(std::make_unique<juce::AudioParameterBool>("FREEZE", "Freeze", false));
+    params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{ "FREEZE", 1 }, "Freeze", false));
+    // params.push_back(std::make_unique<juce::AudioParameterBool>("FREEZE", "Freeze", false));
     
     return { params.begin(), params.end() };
 }

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="fB20Ki" name="FftBuffer" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="fB20Ki" name="StutterAndHold" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
-              splashScreenColour="Light" pluginAUIsSandboxSafe="1">
-  <MAINGROUP id="VbCc9H" name="FftBuffer">
+              splashScreenColour="Light" pluginAUIsSandboxSafe="1" version="0.0.1"
+              companyName="Pass By Reference" companyEmail="max.henry@mail.mcgill.ca">
+  <MAINGROUP id="VbCc9H" name="StutterAndHold">
     <GROUP id="{8A9540A2-F470-E88A-7CCC-1DFC79141D0C}" name="Source">
       <FILE id="LlTvQb" name="OlaBuffer.cpp" compile="1" resource="0" file="Source/OlaBuffer.cpp"/>
       <FILE id="mDgFAV" name="OlaBuffer.h" compile="0" resource="0" file="Source/OlaBuffer.h"/>
