@@ -94,6 +94,9 @@ void FftBufferAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    // Necessary in the case that `prepareToPlay` is called more than once.
+    olaProcessor.clear();
+    
     // Build one processor per channel.
     for (int i = 0; i < getTotalNumInputChannels(); ++i)
         olaProcessor.push_back(SimpleOlaProcessor(4096, 4));
