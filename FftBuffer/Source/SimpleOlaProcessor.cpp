@@ -22,10 +22,11 @@ SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
 void SimpleOlaProcessor::init(int frameSize, int numFrames)
 {
     isEffectRequested = false;
-    isWaitingToTurnBackOn = false;
     initWindow(frameSize);
     initFftBuffer(frameSize);
     initPhaseAdvanceAndPhaseDelta(frameSize, numFrames);
+    
+    ctrRefresh = kNumRefreshFrames;
 }
 
 void SimpleOlaProcessor::initPhaseAdvanceAndPhaseDelta(int frameSize, int numFrames)
@@ -58,52 +59,46 @@ void SimpleOlaProcessor::initWindow(int frameSize)
     
     // Hamming window.
     for (int n = 0; n < frameSize; ++n)
-        window[n] = 0.54 - 0.46 * cos(2.0 * M_PI * static_cast<float>(n) / N);
+        window[n] = 0.54 - 0.46 * cos(2.0 * M_PI * static_cast<float>(n) / (N - 1.0));
 }
 
 void SimpleOlaProcessor::processFrameBuffers()
 {
 
-    // Convert adjacent frames to magnitude and phase.
+    // Get spectra of newest and second-newest frame.
     for (int n = 0; n < 2; ++n)
     {
-        int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
-        std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
+        int frameIdx = nonnegativeModulus(pNewestFrame - n, numOverlap);
         
-        // Remove window from old frame before analysis.
         if (n == 1)
         {
-            for (int i = 0; i < frameOfInterest.size(); ++i)
-                frameOfInterest[i] /= window[i];
-        }
-        
-        std::copy(frameOfInterest.begin(), frameOfInterest.end(), fftBuffer[n].begin());
+            // Remove window of old frame before spectral analysis.
+            for (int i = 0; i < frameSize; ++i)
+                frameBuffers[frameIdx][i] /= window[i];
 
+        }
+            
+        std::copy(frameBuffers[frameIdx].begin(), frameBuffers[frameIdx].end(), fftBuffer[n].begin());
         
         fft.performRealOnlyForwardTransform(fftBuffer[n].data());
         convertToMagnitudeAndPhase(fftBuffer[n]);
     }
     
     
-    // Calculate phase difference (for instantaneous frequency).
-    std::vector<float>& newSpectrum = fftBuffer[0];
-    std::vector<float>& lastSpectrum = fftBuffer[1];
-    
-    if (isWaitingToTurnBackOn)
-    {
-        isEffectRequested = true;
-        isWaitingToTurnBackOn = false;
-    }
     
     if (isRefreshRequested)
     {
         isRefreshRequested = false;
-        isWaitingToTurnBackOn = true;
-        isEffectRequested = false;
+        ctrRefresh = 0;
     }
     
     
-    if (isEffectRequested)
+    std::vector<float>& newSpectrum = fftBuffer[0];
+    std::vector<float>& lastSpectrum = fftBuffer[1];
+    
+    bool isGrabbingRefreshFrames = (ctrRefresh++ < kNumRefreshFrames);
+    
+    if (isEffectRequested && !isGrabbingRefreshFrames)
     {
         // Replace new magnitude with last magnitude.
         for (int n = 0; n < phaseDelta.size(); ++n)
@@ -134,20 +129,17 @@ void SimpleOlaProcessor::processFrameBuffers()
     // Convert back to polar, then back to time.
     for (int n = 0; n < 2; ++n)
     {
-        int whichFrame = nonnegativeModulus(pNewestFrame - n, numOverlap);
-        std::vector<float>& frameOfInterest = frameBuffers[whichFrame];
-                
+        int frameIdx = nonnegativeModulus(pNewestFrame - n, numOverlap);
+ 
         convertToPolar(fftBuffer[n]);
         fft.performRealOnlyInverseTransform(fftBuffer[n].data());
                 
-        std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameOfInterest.size(), frameOfInterest.begin());
+        std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameBuffers[frameIdx].size(), frameBuffers[frameIdx].begin());
+        
+        // Window both frames.
+        for (int i = 0; i < frameSize; ++i)
+            frameBuffers[frameIdx][i] *= window[i];
     }
-    
-    // Window before OLA.
-    std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
-
-    for (int i = 0; i < newestFrame.size(); ++i)
-        newestFrame[i] *= window[i];
 }
 
 void SimpleOlaProcessor::setIsEffectRequested(bool input)

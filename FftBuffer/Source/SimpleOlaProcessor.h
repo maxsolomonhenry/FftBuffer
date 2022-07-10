@@ -29,6 +29,8 @@ private:
     void convertToPolar(std::vector<float> &X);
     
     int nonnegativeModulus(int i, int n);
+    int ctrRefresh;
+    const int kNumRefreshFrames{2};
     
     juce::dsp::FFT fft;
     std::vector<std::vector<float>> fftBuffer;
@@ -38,5 +40,4 @@ private:
     
     bool isEffectRequested;
     bool isRefreshRequested;
-    bool isWaitingToTurnBackOn;
 };

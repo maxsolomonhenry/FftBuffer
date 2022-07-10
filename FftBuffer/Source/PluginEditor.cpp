@@ -44,7 +44,6 @@ void FftBufferAudioProcessorEditor::paint (juce::Graphics& g)
 
 void FftBufferAudioProcessorEditor::resized()
 {
-    int spacing = 30;
     int itemWidth = 100;
     int itemHeight = 100;
     
