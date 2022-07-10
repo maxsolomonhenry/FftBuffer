@@ -46,7 +46,7 @@ void FftBufferAudioProcessorEditor::resized()
 {
     int itemWidth = 100;
     int itemHeight = 100;
-    
+
     freezeButton.setBounds((getWidth() - itemWidth) / 2, getHeight() / 2 + itemHeight / 2, itemWidth, itemHeight);
     refreshButton.setBounds((getWidth() - itemWidth) / 2, getHeight() / 2 - itemHeight / 2, itemWidth, itemHeight);
 }

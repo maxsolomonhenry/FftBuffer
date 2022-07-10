@@ -1,3 +1,11 @@
+# UPDATE for JUCE FORUM visitors
+
+This project started as an overlap-add buffer object, that could facilitate easy anaylsis-synthesis OLA-type processing. That part seems to work just fine. So now I'm trying it out as a "spectral processor." It is currently a simple phase vocoder that freezes and holds one frame of audio. An optional "refresh" button lets you grab a new frame. 
+
+## Crashing behaviour
+
+As of right now (July 10, 2022), the plugin crashes reaper. If you even attempt to open the VST in reaper it causes the whole program to shut off. Plugin stand-alone works fine, the AU also appears to work fine (in GarageBand). Halp?
+
 # FFT Buffer
 
 Experiments in JUCE to build an overlap add framework capable of doing spectral processing. 
