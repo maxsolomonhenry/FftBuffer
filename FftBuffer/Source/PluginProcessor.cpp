@@ -104,6 +104,8 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     stutterRateHz = 0.0;
     samplesPerStutterPeriod = std::numeric_limits<int>::max();
     ctrStutter = 0;
+    
+    setLatencySamples(4096);
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -151,13 +153,17 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         
         for (int j = 0; j < buffer.getNumSamples(); ++j)
         {
+            // TODO: This logic can def be cleaned up.
             if (i == 0)
                 ctrStutter++;
 
             if (ctrStutter >= samplesPerStutterPeriod)
             {
                 olaProcessor[i].setIsRefreshRequested(true);
-                ctrStutter = 0;
+                
+                // TODO: This logic too is real messy.
+                if (i == (olaProcessor.size() - 1))
+                    ctrStutter = 0;
             }
             
             olaProcessor[i].process(buffer.getWritePointer(i)[j]);

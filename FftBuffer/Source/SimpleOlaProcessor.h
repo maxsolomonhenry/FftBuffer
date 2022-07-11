@@ -23,7 +23,7 @@ public:
     
 private:
     void init(int frameSize, int numFrames);
-    void initWindow(int frameSize);
+    void initWindow(int frameSize, int numFrames);
     void initFftBuffer(int frameSize);
     void initPhaseAdvanceAndPhaseDelta(int frameSize, int numFrames);
     void convertToMagnitudeAndPhase(std::vector<float> &X);

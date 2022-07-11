@@ -22,7 +22,7 @@ SimpleOlaProcessor::SimpleOlaProcessor(int frameSize, int numFrames)
 void SimpleOlaProcessor::init(int frameSize, int numFrames)
 {
     isEffectRequested = false;
-    initWindow(frameSize);
+    initWindow(frameSize, numFrames);
     initFftBuffer(frameSize);
     initPhaseAdvanceAndPhaseDelta(frameSize, numFrames);
 
@@ -51,7 +51,7 @@ void SimpleOlaProcessor::initFftBuffer(int frameSize)
 }
 
 
-void SimpleOlaProcessor::initWindow(int frameSize)
+void SimpleOlaProcessor::initWindow(int frameSize, int numFrames)
 {
     window.resize(frameSize);
     
@@ -60,6 +60,21 @@ void SimpleOlaProcessor::initWindow(int frameSize)
     // Hamming window.
     for (int n = 0; n < frameSize; ++n)
         window[n] = 0.54 - 0.46 * cos(2.0 * M_PI * static_cast<float>(n) / (N - 1.0));
+    
+    // Calculate overlap gain.
+    int hopSize = frameSize / numFrames;
+    float overlapGainLinear = 0;
+    
+    for (int i = 0; i < numFrames; ++i)
+    {
+        int idx = i * hopSize;
+        
+        overlapGainLinear += window[idx];
+    }
+    
+    // Normalize window to overlap add to 1.
+    for (int n = 0; n < frameSize; ++n)
+        window[n] /= overlapGainLinear;
 }
 
 void SimpleOlaProcessor::processFrameBuffers()
