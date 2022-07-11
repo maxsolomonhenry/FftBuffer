@@ -215,14 +215,11 @@ void FftBufferAudioProcessor::setStutterRateHz(float input)
     {
         stutterRateHz = input;
         
-        // TODO: Get sample rate.
-        int sampleRate = 48000;
-        
         if (stutterRateHz > 0.0)
         {
             float periodSecs = 1.0 / static_cast<float>(stutterRateHz);
             
-            float answerAsFloat = periodSecs * static_cast<float>(sampleRate);
+            float answerAsFloat = periodSecs * static_cast<float>(getSampleRate());
             samplesPerStutterPeriod = static_cast<int>(answerAsFloat);
         }
         else
