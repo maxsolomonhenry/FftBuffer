@@ -53,12 +53,19 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+    void setStutterRateHz(float input);
     juce::AudioProcessorValueTreeState params;
     
     std::vector<SimpleOlaProcessor> olaProcessor;
     
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+    
+    int ctrStutter;
+    int samplesPerStutterPeriod;
+    
+    float stutterRateHz;
+    const float eps{1e-4};
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)

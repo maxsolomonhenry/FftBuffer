@@ -27,6 +27,11 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
             audioProcessor.olaProcessor[i].setIsRefreshRequested(true);
         
     };
+    
+    rateSlider.setTitle("Stutter Rate");
+    rateSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    addAndMakeVisible(rateSlider);
+    rateSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "STUTTERRATE", rateSlider);
 
     setSize (400, 400);
 }
@@ -45,8 +50,16 @@ void FftBufferAudioProcessorEditor::paint (juce::Graphics& g)
 void FftBufferAudioProcessorEditor::resized()
 {
     int itemWidth = 100;
-    int itemHeight = 100;
 
-    freezeButton.setBounds((getWidth() - itemWidth) / 2, getHeight() / 2 + itemHeight / 2, itemWidth, itemHeight);
-    refreshButton.setBounds((getWidth() - itemWidth) / 2, getHeight() / 2 - itemHeight / 2, itemWidth, itemHeight);
+    int freezeHeight = 50;
+    int refreshHeight = 50;
+    
+    int rateWidth = 200;
+    int rateHeight = 200;
+    
+    int border = 30;
+
+    freezeButton.setBounds((getWidth() - itemWidth) / 2, border, itemWidth, freezeHeight);
+    refreshButton.setBounds((getWidth() - itemWidth) / 2, border + freezeHeight + border, itemWidth, refreshHeight);
+    rateSlider.setBounds((getWidth() - rateWidth) / 2, border + freezeHeight + border + refreshHeight + border, rateWidth, rateHeight);
 }

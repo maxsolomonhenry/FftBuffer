@@ -100,6 +100,10 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     // Build one processor per channel.
     for (int i = 0; i < getTotalNumInputChannels(); ++i)
         olaProcessor.push_back(SimpleOlaProcessor(4096, 4));
+    
+    stutterRateHz = 0.0;
+    samplesPerStutterPeriod = std::numeric_limits<int>::max();
+    ctrStutter = 0;
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -137,13 +141,27 @@ bool FftBufferAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
+    auto stutterRateHz = params.getRawParameterValue("STUTTERRATE")->load();
+    
+    setStutterRateHz(stutterRateHz);
     
     for (int i = 0; i < olaProcessor.size(); ++i)
     {
         olaProcessor[i].setIsEffectRequested(isFreezeOn);
         
         for (int j = 0; j < buffer.getNumSamples(); ++j)
+        {
+            if (i == 0)
+                ctrStutter++;
+
+            if (ctrStutter >= samplesPerStutterPeriod)
+            {
+                olaProcessor[i].setIsRefreshRequested(true);
+                ctrStutter = 0;
+            }
+            
             olaProcessor[i].process(buffer.getWritePointer(i)[j]);
+        }
     }
 }
 
@@ -184,7 +202,34 @@ juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::cre
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
     
     params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{ "FREEZE", 1 }, "Freeze", false));
-    // params.push_back(std::make_unique<juce::AudioParameterBool>("FREEZE", "Freeze", false));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "STUTTERRATE" , 2}, "Stutter Rate", juce::NormalisableRange<float>(0.0, 12.0) ,0.0));
     
     return { params.begin(), params.end() };
+}
+
+void FftBufferAudioProcessor::setStutterRateHz(float input)
+{
+    bool hasValueChanged = (abs(input - stutterRateHz) > eps);
+    
+    if (hasValueChanged)
+    {
+        stutterRateHz = input;
+        
+        // TODO: Get sample rate.
+        int sampleRate = 48000;
+        
+        if (stutterRateHz > 0.0)
+        {
+            float periodSecs = 1.0 / static_cast<float>(stutterRateHz);
+            
+            float answerAsFloat = periodSecs * static_cast<float>(sampleRate);
+            samplesPerStutterPeriod = static_cast<int>(answerAsFloat);
+        }
+        else
+        {
+            samplesPerStutterPeriod = std::numeric_limits<int>::max();
+        }
+        
+        DBG(samplesPerStutterPeriod);
+    }
 }

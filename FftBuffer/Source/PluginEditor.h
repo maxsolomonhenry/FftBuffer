@@ -27,8 +27,10 @@ public:
 private:
     juce::ToggleButton freezeButton;
     juce::TextButton refreshButton;
+    juce::Slider rateSlider;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> freezeButtonAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rateSliderAttachment;
 
     FftBufferAudioProcessor& audioProcessor;
 

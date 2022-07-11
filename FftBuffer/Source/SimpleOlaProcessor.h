@@ -19,6 +19,7 @@ public:
     
     void setIsEffectRequested(bool input);
     void setIsRefreshRequested(bool input);
+    void setStutterRateHz(float input);
     
 private:
     void init(int frameSize, int numFrames);
