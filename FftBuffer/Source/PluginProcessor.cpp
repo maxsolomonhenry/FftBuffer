@@ -106,6 +106,8 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     ctrStutter = 0;
     
     setLatencySamples(4096);
+    
+    dryWetSmoothedValue.reset(sampleRate, 0.0001);
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -144,6 +146,10 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 {
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
     auto stutterRateHz = params.getRawParameterValue("STUTTERRATE")->load();
+    auto dryWetGuiValue = params.getRawParameterValue("DRYWET")->load();
+    
+    dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
+    DBG(dryWetSmoothedValue.getNextValue());
     
     setStutterRateHz(stutterRateHz);
     
@@ -212,6 +218,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::cre
     
     params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{ "FREEZE", 1 }, "Freeze", false));
     params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "STUTTERRATE" , 2}, "Stutter Rate", juce::NormalisableRange<float>(0.0, 12.0) ,0.0));
+    
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "DRYWET", 3 }, "Dry/Wet Mix", juce::NormalisableRange<float>(0.0, 1.0), 1.0));
     
     return { params.begin(), params.end() };
 }

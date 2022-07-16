@@ -32,8 +32,13 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     rateSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     addAndMakeVisible(rateSlider);
     rateSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "STUTTERRATE", rateSlider);
+    
+    dryWetSlider.setTitle("Dry/Wet");
+    dryWetSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    addAndMakeVisible(dryWetSlider);
+    dryWetSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "DRYWET", dryWetSlider);
 
-    setSize (400, 400);
+    setSize (400, 800);
 }
 
 FftBufferAudioProcessorEditor::~FftBufferAudioProcessorEditor()
@@ -54,12 +59,15 @@ void FftBufferAudioProcessorEditor::resized()
     int freezeHeight = 50;
     int refreshHeight = 50;
     
-    int rateWidth = 200;
-    int rateHeight = 200;
+    int knobWidth = 200;
+    int knobHeight = 200;
     
     int border = 30;
 
     freezeButton.setBounds((getWidth() - itemWidth) / 2, border, itemWidth, freezeHeight);
+    
     refreshButton.setBounds((getWidth() - itemWidth) / 2, border + freezeHeight + border, itemWidth, refreshHeight);
-    rateSlider.setBounds((getWidth() - rateWidth) / 2, border + freezeHeight + border + refreshHeight + border, rateWidth, rateHeight);
+    rateSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border, knobWidth, knobHeight);
+    
+    dryWetSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border + knobHeight + border, knobWidth, knobHeight);
 }

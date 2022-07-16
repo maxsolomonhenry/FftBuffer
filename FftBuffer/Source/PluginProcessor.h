@@ -60,6 +60,8 @@ public:
     
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
+    juce::LinearSmoothedValue<float> dryWetSmoothedValue { 1.0 };
+    
     
     int ctrStutter;
     int samplesPerStutterPeriod;
