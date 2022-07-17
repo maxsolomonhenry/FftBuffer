@@ -94,26 +94,41 @@ void FftBufferAudioProcessor::changeProgramName (int index, const juce::String& 
 //==============================================================================
 void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumOutputChannels();
+    
+    const int kNumSpectralBufferSamples = 4096;
+    
     // Necessary in the case that `prepareToPlay` is called more than once.
     olaProcessor.clear();
     
     // Build one processor per channel.
     for (int i = 0; i < getTotalNumInputChannels(); ++i)
-        olaProcessor.push_back(SimpleOlaProcessor(4096, 4));
+    {
+        olaProcessor.push_back(SimpleOlaProcessor(kNumSpectralBufferSamples, 4));
+    }
+        
+    dryDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples);
+    dryDelayLine.prepare(spec);
+    dryDelayLine.setDelay(kNumSpectralBufferSamples);
+
+    
+    dryDelayBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
     
     stutterRateHz = 0.0;
     samplesPerStutterPeriod = std::numeric_limits<int>::max();
     ctrStutter = 0;
     
-    setLatencySamples(4096);
+    setLatencySamples(kNumSpectralBufferSamples);
     
     dryWetSmoothedValue.reset(sampleRate, 0.0001);
 }
 
 void FftBufferAudioProcessor::releaseResources()
 {
-    // When playback stops, you can use this as an opportunity to free up any
-    // spare memory, etc.
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -123,15 +138,10 @@ bool FftBufferAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
     juce::ignoreUnused (layouts);
     return true;
   #else
-    // This is the place where you check if the layout is supported.
-    // In this template code we only support mono or stereo.
-    // Some plugin hosts, such as certain GarageBand versions, will only
-    // load plugins that support stereo bus layouts.
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-    // This checks if the input layout matches the output layout
    #if ! JucePlugin_IsSynth
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
@@ -149,9 +159,15 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     auto dryWetGuiValue = params.getRawParameterValue("DRYWET")->load();
     
     dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
-    DBG(dryWetSmoothedValue.getNextValue());
     
     setStutterRateHz(stutterRateHz);
+    
+    // Copy block for delayed dry-wet mixing.
+    juce::dsp::AudioBlock<float> block(buffer);
+    juce::dsp::AudioBlock<float> dryDelayBlock(dryDelayBuffer);
+    
+    juce::dsp::ProcessContextNonReplacing<float> dryDelayContext(block, dryDelayBlock);
+    dryDelayLine.process(dryDelayContext);
     
     for (int i = 0; i < olaProcessor.size(); ++i)
     {
@@ -173,6 +189,26 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             }
             
             olaProcessor[i].process(buffer.getWritePointer(i)[j]);
+        }
+    }
+    
+    // Calculate dry/wet coefficients (TODO: linear for now).
+    auto wetVal = dryWetSmoothedValue.getNextValue();
+    auto dryVal = 1.0 - wetVal;
+    
+    // Mix dry and wet signals.
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
+    {
+        auto* wetPointer = buffer.getWritePointer(c);
+        auto* dryPointer = dryDelayBuffer.getReadPointer(c);
+        
+        for (int s = 0; s < buffer.getNumSamples(); ++s)
+        {
+            auto* pOutput = wetPointer + s;
+            auto* pDry = dryPointer + s;
+            
+            // TODO: This is confusing.
+            *pOutput = *pOutput * wetVal + *pDry * dryVal;
         }
     }
 }

@@ -68,6 +68,8 @@ private:
     
     float stutterRateHz;
     const float eps{1e-4};
+    juce::AudioBuffer<float> dryDelayBuffer;
+    juce::dsp::DelayLine<float> dryDelayLine;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
