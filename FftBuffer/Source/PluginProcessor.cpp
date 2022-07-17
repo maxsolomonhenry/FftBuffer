@@ -114,7 +114,6 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     dryDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples);
     dryDelayLine.prepare(spec);
     dryDelayLine.setDelay(kNumSpectralBufferSamples);
-
     
     dryDelayBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
     
@@ -199,16 +198,12 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     // Mix dry and wet signals.
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
-        auto* wetPointer = buffer.getWritePointer(c);
+        auto* outPointer = buffer.getWritePointer(c);
         auto* dryPointer = dryDelayBuffer.getReadPointer(c);
         
         for (int s = 0; s < buffer.getNumSamples(); ++s)
         {
-            auto* pOutput = wetPointer + s;
-            auto* pDry = dryPointer + s;
-            
-            // TODO: This is confusing.
-            *pOutput = *pOutput * wetVal + *pDry * dryVal;
+            outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
         }
     }
 }
