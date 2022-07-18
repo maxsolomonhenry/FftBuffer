@@ -115,7 +115,15 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     dryDelayLine.prepare(spec);
     dryDelayLine.setDelay(kNumSpectralBufferSamples);
     
+    envelopeFollower = juce::dsp::BallisticsFilter<float>();
+    envelopeFollower.prepare(spec);
+    
+    // TODO: Make this knob-y.
+    envelopeFollower.setAttackTime(0.5);
+    envelopeFollower.setReleaseTime(0.5);
+    
     dryDelayBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
+    envelopeBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
     
     stutterRateHz = 0.0;
     samplesPerStutterPeriod = std::numeric_limits<int>::max();
@@ -161,12 +169,19 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     setStutterRateHz(stutterRateHz);
     
-    // Copy block for delayed dry-wet mixing.
+    // Blocks.
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::AudioBlock<float> dryDelayBlock(dryDelayBuffer);
+    juce::dsp::AudioBlock<float> envelopeBlock(envelopeBuffer);
     
+    // Delay dry audio.
     juce::dsp::ProcessContextNonReplacing<float> dryDelayContext(block, dryDelayBlock);
     dryDelayLine.process(dryDelayContext);
+    
+    // Calculate envelope of dry audio.
+    juce::dsp::ProcessContextNonReplacing<float> envelopeContext(dryDelayBlock, envelopeBlock);
+    envelopeFollower.process(envelopeContext);
+    
     
     for (int i = 0; i < olaProcessor.size(); ++i)
     {
@@ -200,9 +215,12 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     {
         auto* outPointer = buffer.getWritePointer(c);
         auto* dryPointer = dryDelayBuffer.getReadPointer(c);
+        auto* envelopePointer = envelopeBuffer.getReadPointer(c);
         
         for (int s = 0; s < buffer.getNumSamples(); ++s)
         {
+            // TODO: Apply a variable depth to this.
+            outPointer[s] *= envelopePointer[s];
             outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
         }
     }
