@@ -72,7 +72,7 @@ private:
     juce::dsp::DelayLine<float> dryDelayLine;
     
     juce::AudioBuffer<float> envelopeBuffer;
-    juce::dsp::BallisticsFilter<float> envelopeFollower;
+    juce::dsp::IIR::Filter<float> envelopeFollower;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
