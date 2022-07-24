@@ -220,10 +220,13 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     {
         auto* outPointer = buffer.getWritePointer(c);
         auto* dryPointer = dryDelayBuffer.getReadPointer(c);
-        auto* envelopePointer = envelopeBuffer.getReadPointer(c);
+        auto* envelopePointer = envelopeBuffer.getWritePointer(c);
         
         for (int s = 0; s < buffer.getNumSamples(); ++s)
         {
+            // Clip envelope to a maximum of 1.0.
+            envelopePointer[s] = envelopePointer[s] > 1.0 ? 1.0 : envelopePointer[s];
+            
             // TODO: Apply a variable depth to this.
             outPointer[s] *= envelopeDepth * (envelopePointer[s] - kEnvelopeTrim) + kEnvelopeTrim;
             outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
