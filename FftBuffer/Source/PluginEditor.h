@@ -29,10 +29,12 @@ private:
     juce::TextButton refreshButton;
     juce::Slider rateSlider;
     juce::Slider dryWetSlider;
+    juce::Slider envelopeDepthSlider;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> freezeButtonAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rateSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> dryWetSliderAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> envelopeDepthSliderAttachment;
 
     FftBufferAudioProcessor& audioProcessor;
 

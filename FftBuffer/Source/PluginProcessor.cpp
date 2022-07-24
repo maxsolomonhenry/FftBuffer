@@ -115,10 +115,12 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     dryDelayLine.prepare(spec);
     dryDelayLine.setDelay(kNumSpectralBufferSamples);
     
+    envelopeDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
+    envelopeDelayLine.prepare(spec);
+    envelopeDelayLine.setDelay(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
+    
     envelopeFollower = juce::dsp::IIR::Filter<float>(juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 100.0, 1.0));
     envelopeFollower.prepare(spec);
-    
-    // TODO: Make this knob-y.
     
     dryDelayBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
     envelopeBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
@@ -162,6 +164,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
     auto stutterRateHz = params.getRawParameterValue("STUTTERRATE")->load();
     auto dryWetGuiValue = params.getRawParameterValue("DRYWET")->load();
+    auto envelopeDepth = params.getRawParameterValue("ENVDEPTH")->load();
     
     dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
     
@@ -177,9 +180,12 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     dryDelayLine.process(dryDelayContext);
     
     // Calculate envelope of dry audio.
-    envelopeBlock.replaceWithAbsoluteValueOf(envelopeBlock);
-    juce::dsp::ProcessContextNonReplacing<float> envelopeContext(dryDelayBlock, envelopeBlock);
+    envelopeBlock.replaceWithAbsoluteValueOf(block);
+    
+    juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
     envelopeFollower.process(envelopeContext);
+    
+    envelopeBlock.multiplyBy(kEnvelopeGainLinear);
     
     
     for (int i = 0; i < olaProcessor.size(); ++i)
@@ -209,9 +215,6 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     auto wetVal = dryWetSmoothedValue.getNextValue();
     auto dryVal = 1.0 - wetVal;
     
-    const float trim = 0.5;
-    const float depth = 4.0;
-    
     // Mix dry and wet signals.
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
@@ -222,7 +225,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         for (int s = 0; s < buffer.getNumSamples(); ++s)
         {
             // TODO: Apply a variable depth to this.
-            outPointer[s] *= depth * (envelopePointer[s] - trim) + trim;
+            outPointer[s] *= envelopeDepth * (envelopePointer[s] - kEnvelopeTrim) + kEnvelopeTrim;
             outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
         }
     }
@@ -271,6 +274,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::cre
     params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "STUTTERRATE" , 2}, "Stutter Rate", juce::NormalisableRange<float>(0.0, 12.0) ,0.0));
     
     params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "DRYWET", 3 }, "Dry/Wet Mix", juce::NormalisableRange<float>(0.0, 1.0), 1.0));
+    
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "ENVDEPTH", 4 }, "Envelope Depth", juce::NormalisableRange<float>(0.0, 1.0), 0.0));
     
     return { params.begin(), params.end() };
 }

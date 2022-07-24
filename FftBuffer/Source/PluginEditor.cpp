@@ -37,6 +37,11 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     dryWetSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
     addAndMakeVisible(dryWetSlider);
     dryWetSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "DRYWET", dryWetSlider);
+    
+    envelopeDepthSlider.setTitle("Envelope Depth");
+    envelopeDepthSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    addAndMakeVisible(envelopeDepthSlider);
+    envelopeDepthSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "ENVDEPTH", envelopeDepthSlider);
 
     setSize (400, 800);
 }
@@ -70,4 +75,6 @@ void FftBufferAudioProcessorEditor::resized()
     rateSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border, knobWidth, knobHeight);
     
     dryWetSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border + knobHeight + border, knobWidth, knobHeight);
+    
+    envelopeDepthSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border + knobHeight + border + knobHeight + border, knobWidth, knobHeight);
 }

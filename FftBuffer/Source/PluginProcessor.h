@@ -62,7 +62,6 @@ private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
     juce::LinearSmoothedValue<float> dryWetSmoothedValue { 1.0 };
     
-    
     int ctrStutter;
     int samplesPerStutterPeriod;
     
@@ -71,8 +70,14 @@ private:
     juce::AudioBuffer<float> dryDelayBuffer;
     juce::dsp::DelayLine<float> dryDelayLine;
     
+    juce::dsp::DelayLine<float> envelopeDelayLine;
+    
     juce::AudioBuffer<float> envelopeBuffer;
     juce::dsp::IIR::Filter<float> envelopeFollower;
+    
+    const float kEnvelopeTrim = 0.9;
+    const float kEnvelopeGainLinear = 5.623413251903491;
+    const int kEnvelopeDelaySamples = 1100;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
