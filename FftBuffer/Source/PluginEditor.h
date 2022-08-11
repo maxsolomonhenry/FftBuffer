@@ -25,7 +25,9 @@ public:
     void resized() override;
 
 private:
-    juce::ToggleButton freezeButton;
+    juce::Label vanityLabel;
+    
+    juce::TextButton freezeButton;
     juce::TextButton refreshButton;
     
     juce::Slider rateSlider;
