@@ -207,6 +207,9 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             }
             
             olaProcessor[i].process(buffer.getWritePointer(i)[j]);
+            
+            // REMOVEME.
+            DBG(static_cast<int>(olaProcessor[i].getIsVoiced()));
         }
     }
     

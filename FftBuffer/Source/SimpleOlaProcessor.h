@@ -21,6 +21,8 @@ public:
     void setIsRefreshRequested(bool input);
     void setStutterRateHz(float input);
     
+    bool getIsVoiced();
+    
 private:
     void init(int frameSize, int numFrames);
     void initWindow(int frameSize, int numFrames);
@@ -41,4 +43,15 @@ private:
     
     bool isEffectRequested;
     bool isRefreshRequested;
+    
+    bool determineIfVoiced(const std::vector<float> &frame);
+    bool isCurrentFrameVoiced;
+    bool isPreviousFrameVoiced;
+    bool isVoiced;
+    
+    float countZeroCrossings(const std::vector<float> &frame);
+    float getNormalizedEnergy(const std::vector<float> &frame);
+    
+    const float kVoicedThreshold = 0.5;
+    const float kNoiseFloor = 1e-4;
 };

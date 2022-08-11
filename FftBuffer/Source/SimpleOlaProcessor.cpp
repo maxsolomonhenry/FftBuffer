@@ -27,6 +27,10 @@ void SimpleOlaProcessor::init(int frameSize, int numFrames)
     initPhaseAdvanceAndPhaseDelta(frameSize, numFrames);
 
     ctrRefresh = kNumRefreshFrames;
+    
+    isVoiced = false;
+    isCurrentFrameVoiced = false;
+    isPreviousFrameVoiced = false;
 }
 
 void SimpleOlaProcessor::initPhaseAdvanceAndPhaseDelta(int frameSize, int numFrames)
@@ -85,12 +89,19 @@ void SimpleOlaProcessor::processFrameBuffers()
     {
         int frameIdx = nonnegativeModulus(pNewestFrame - n, numOverlap);
         
+        if (n == 0)
+        {
+            isCurrentFrameVoiced = determineIfVoiced(frameBuffers[frameIdx]);
+            
+            isVoiced = (isCurrentFrameVoiced && isPreviousFrameVoiced);
+            isPreviousFrameVoiced = isCurrentFrameVoiced;
+        }
+        
         if (n == 1)
         {
             // Remove window of old frame before spectral analysis.
             for (int i = 0; i < frameSize; ++i)
                 frameBuffers[frameIdx][i] /= window[i];
-
         }
             
         std::copy(frameBuffers[frameIdx].begin(), frameBuffers[frameIdx].end(), fftBuffer[n].begin());
@@ -99,17 +110,16 @@ void SimpleOlaProcessor::processFrameBuffers()
         convertToMagnitudeAndPhase(fftBuffer[n]);
     }
     
+    // Timing logic to refresh frozen sound.
     if (isRefreshRequested)
     {
         isRefreshRequested = false;
         ctrRefresh = 0;
     }
-    
+    bool isGrabbingRefreshFrames = (ctrRefresh++ < kNumRefreshFrames);
     
     std::vector<float>& newSpectrum = fftBuffer[0];
     std::vector<float>& lastSpectrum = fftBuffer[1];
-    
-    bool isGrabbingRefreshFrames = (ctrRefresh++ < kNumRefreshFrames);
     
     if (isEffectRequested && !isGrabbingRefreshFrames)
     {
@@ -208,4 +218,54 @@ void SimpleOlaProcessor::convertToPolar(std::vector<float> &X)
         X[n] = real;
         X[n + 1] = imaginary;
     }
+}
+
+bool SimpleOlaProcessor::determineIfVoiced(const std::vector<float> &frame)
+{
+    float numZeroCrossings = countZeroCrossings(frame);
+    float energy = getNormalizedEnergy(frame);
+    
+    return (energy / numZeroCrossings > kVoicedThreshold);
+}
+
+float SimpleOlaProcessor::countZeroCrossings(const std::vector<float> &frame)
+{
+    float count = 0.0;
+    
+    bool isPreviousPositive = true;
+    for (int i = 0; i < frame.size(); ++i)
+    {
+        // Technically this is "non-negative," but who's counting...
+        bool isCurrentPositive = (frame[i] >= 0);
+        
+        if (isCurrentPositive != isPreviousPositive)
+            count++;
+        
+        isPreviousPositive = isCurrentPositive;
+    }
+    
+    return count;
+}
+
+float SimpleOlaProcessor::getNormalizedEnergy(const std::vector<float> &frame)
+{
+    float energy = 0.0;
+    
+    float maxValue = *std::max_element(frame.begin(), frame.end());
+    
+    for (int i = 0; i < frame.size(); ++i)
+    {
+        energy += frame[i] * frame[i];
+    }
+    
+    // Only normalize non-silent(ish) frames.
+    if (maxValue > kNoiseFloor)
+        energy /= maxValue;
+    
+    return energy;
+}
+
+bool SimpleOlaProcessor::getIsVoiced()
+{
+    return isVoiced;
 }
