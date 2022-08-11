@@ -186,51 +186,50 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     envelopeBlock.multiplyBy(kEnvelopeGainLinear);
     
     
-    // Logic for "stutter" timing (i.e., the freeze on/off).
-    for (int i = 0; i < olaProcessor.size(); ++i)
-    {
-        olaProcessor[i].setIsEffectRequested(isFreezeOn);
-        
-        for (int j = 0; j < buffer.getNumSamples(); ++j)
-        {
-            // TODO: This logic can def be cleaned up.
-            if (i == 0)
-                ctrStutter++;
-
-            if (ctrStutter >= samplesPerStutterPeriod)
-            {
-                olaProcessor[i].setIsRefreshRequested(true);
-                
-                // TODO: This logic too is real messy.
-                if (i == (olaProcessor.size() - 1))
-                    ctrStutter = 0;
-            }
-            
-            olaProcessor[i].process(buffer.getWritePointer(i)[j]);
-            
-            // REMOVEME.
-            DBG(static_cast<int>(olaProcessor[i].getIsVoiced()));
-        }
-    }
-    
     // Calculate dry/wet coefficients (TODO: linear for now).
-    auto wetVal = dryWetSmoothedValue.getNextValue();
-    auto dryVal = 1.0 - wetVal;
+    auto userWetValue = dryWetSmoothedValue.getNextValue();
     
-    // Apply amplitude envelope, and mix dry/wet.
+    float wetValue = userWetValue;
+    float dryValue = 1 - wetValue;
+
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
         auto* outPointer = buffer.getWritePointer(c);
         auto* dryPointer = dryDelayBuffer.getReadPointer(c);
         auto* envelopePointer = envelopeBuffer.getWritePointer(c);
         
+        olaProcessor[c].setIsEffectRequested(isFreezeOn);
+        
         for (int s = 0; s < buffer.getNumSamples(); ++s)
         {
-            // Clip envelope to a maximum of 1.0.
-            envelopePointer[s] = envelopePointer[s] > 1.0 ? 1.0 : envelopePointer[s];
+            // Only increment counter once for all channels.
+            if (c == 0)
+                ctrStutter++;
+
+            if (ctrStutter >= samplesPerStutterPeriod)
+            {
+                olaProcessor[c].setIsRefreshRequested(true);
+                
+                // TODO: This logic too is real messy.
+                if (c == (olaProcessor.size() - 1))
+                    ctrStutter = 0;
+            }
             
+            olaProcessor[c].process(buffer.getWritePointer(c)[s]);
+            
+            // Voiced/Unvoiced mixing logic.
+            if (olaProcessor[c].getIsVoiced())
+                wetValue = std::min<float>(wetValue + kCrossFadeIncrement, userWetValue);
+            else
+                wetValue = std::max<float>(wetValue - kCrossFadeIncrement, 0.0);
+            
+            dryValue = 1.0 - wetValue;
+            DBG(wetValue);
+
+            // Apply envelope and dry/wet mixing.
+            envelopePointer[s] = envelopePointer[s] > 1.0 ? 1.0 : envelopePointer[s];
             outPointer[s] *= envelopeDepth * (envelopePointer[s] - kEnvelopeTrim) + kEnvelopeTrim;
-            outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
+            outPointer[s] = outPointer[s] * wetValue + dryPointer[s] * dryValue;
         }
     }
 }

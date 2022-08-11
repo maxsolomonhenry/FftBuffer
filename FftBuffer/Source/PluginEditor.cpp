@@ -98,6 +98,6 @@ void FftBufferAudioProcessorEditor::resized()
     freezeButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
     refreshButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
     rateSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
-    dryWetSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
     envelopeDepthSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
+    dryWetSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
 }

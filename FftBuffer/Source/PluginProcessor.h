@@ -78,6 +78,7 @@ private:
     const float kEnvelopeTrim = 0.9;
     const float kEnvelopeGainLinear = 5.623413251903491;
     const int kEnvelopeDelaySamples = 1100;
+    const float kCrossFadeIncrement = 0.0009765625;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
