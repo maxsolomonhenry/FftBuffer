@@ -181,13 +181,12 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     // Calculate envelope of dry audio.
     envelopeBlock.replaceWithAbsoluteValueOf(block);
-    
     juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
     envelopeFollower.process(envelopeContext);
-    
     envelopeBlock.multiplyBy(kEnvelopeGainLinear);
     
     
+    // Logic for "stutter" timing (i.e., the freeze on/off).
     for (int i = 0; i < olaProcessor.size(); ++i)
     {
         olaProcessor[i].setIsEffectRequested(isFreezeOn);
@@ -215,7 +214,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     auto wetVal = dryWetSmoothedValue.getNextValue();
     auto dryVal = 1.0 - wetVal;
     
-    // Mix dry and wet signals.
+    // Apply amplitude envelope, and mix dry/wet.
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
         auto* outPointer = buffer.getWritePointer(c);
@@ -227,7 +226,6 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             // Clip envelope to a maximum of 1.0.
             envelopePointer[s] = envelopePointer[s] > 1.0 ? 1.0 : envelopePointer[s];
             
-            // TODO: Apply a variable depth to this.
             outPointer[s] *= envelopeDepth * (envelopePointer[s] - kEnvelopeTrim) + kEnvelopeTrim;
             outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
         }
