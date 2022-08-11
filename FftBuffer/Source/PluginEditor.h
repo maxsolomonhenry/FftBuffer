@@ -27,9 +27,15 @@ public:
 private:
     juce::ToggleButton freezeButton;
     juce::TextButton refreshButton;
+    
     juce::Slider rateSlider;
+    juce::Label rateLabel;
+    
     juce::Slider dryWetSlider;
+    juce::Label dryWetLabel;
+    
     juce::Slider envelopeDepthSlider;
+    juce::Label envelopeDepthLabel;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> freezeButtonAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rateSliderAttachment;

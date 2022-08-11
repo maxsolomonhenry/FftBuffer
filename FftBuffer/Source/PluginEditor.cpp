@@ -30,20 +30,35 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     
     rateSlider.setTitle("Stutter Rate");
     rateSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    rateSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0, 0);
     addAndMakeVisible(rateSlider);
     rateSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "STUTTERRATE", rateSlider);
     
+    rateLabel.setText("Stutter Rate", juce::dontSendNotification);
+    rateLabel.attachToComponent(&rateSlider, false);
+    rateLabel.setJustificationType(juce::Justification::centred);
+    
     dryWetSlider.setTitle("Dry/Wet");
     dryWetSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    dryWetSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0, 0);
     addAndMakeVisible(dryWetSlider);
     dryWetSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "DRYWET", dryWetSlider);
     
+    dryWetLabel.setText("Dry/Wet", juce::dontSendNotification);
+    dryWetLabel.attachToComponent(&dryWetSlider, false);
+    dryWetLabel.setJustificationType(juce::Justification::centred);
+    
     envelopeDepthSlider.setTitle("Envelope Depth");
     envelopeDepthSlider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    envelopeDepthSlider.setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0, 0);
     addAndMakeVisible(envelopeDepthSlider);
     envelopeDepthSliderAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(audioProcessor.params, "ENVDEPTH", envelopeDepthSlider);
-
-    setSize (400, 800);
+    
+    envelopeDepthLabel.setText("Envelope Depth", juce::dontSendNotification);
+    envelopeDepthLabel.attachToComponent(&envelopeDepthSlider, false);
+    envelopeDepthLabel.setJustificationType(juce::Justification::centred);
+    
+    setSize (600, 600);
 }
 
 FftBufferAudioProcessorEditor::~FftBufferAudioProcessorEditor()
@@ -59,22 +74,24 @@ void FftBufferAudioProcessorEditor::paint (juce::Graphics& g)
 
 void FftBufferAudioProcessorEditor::resized()
 {
-    int itemWidth = 100;
 
-    int freezeHeight = 50;
-    int refreshHeight = 50;
+    int componentHeight = 120;
+    int borderSize = 50;
+    int bufferSize = 20;
     
-    int knobWidth = 200;
-    int knobHeight = 200;
+    auto totalRegion = getLocalBounds();
+    auto leftMargin = totalRegion.removeFromLeft(borderSize);
+    auto rightMargin = totalRegion.removeFromRight(borderSize);
+    auto topMargin = totalRegion.removeFromTop(borderSize);
     
-    int border = 30;
-
-    freezeButton.setBounds((getWidth() - itemWidth) / 2, border, itemWidth, freezeHeight);
+    int columnWidth = totalRegion.getWidth() / 2;
     
-    refreshButton.setBounds((getWidth() - itemWidth) / 2, border + freezeHeight + border, itemWidth, refreshHeight);
-    rateSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border, knobWidth, knobHeight);
+    auto right = totalRegion.removeFromRight(columnWidth);
+    auto left = totalRegion.removeFromLeft(columnWidth);
     
-    dryWetSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border + knobHeight + border, knobWidth, knobHeight);
-    
-    envelopeDepthSlider.setBounds((getWidth() - knobWidth) / 2, border + freezeHeight + border + refreshHeight + border + knobHeight + border + knobHeight + border, knobWidth, knobHeight);
+    freezeButton.setBounds(left.removeFromTop(componentHeight));
+    refreshButton.setBounds(left.removeFromTop(componentHeight).reduced(20));
+    rateSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
+    dryWetSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
+    envelopeDepthSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
 }
