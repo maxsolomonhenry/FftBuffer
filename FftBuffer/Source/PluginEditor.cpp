@@ -86,10 +86,7 @@ void FftBufferAudioProcessorEditor::resized()
     int bufferSize = 20;
     
     auto totalRegion = getLocalBounds();
-    auto leftMargin = totalRegion.removeFromLeft(borderSize);
-    auto rightMargin = totalRegion.removeFromRight(borderSize);
-    auto topMargin = totalRegion.removeFromTop(borderSize);
-    auto bottomMargine = totalRegion.removeFromBottom(borderSize);
+    totalRegion.reduce(borderSize, borderSize);
     
     int componentHeight = totalRegion.getHeight() / 3;
     int componentWidth = totalRegion.getWidth() / 2;
