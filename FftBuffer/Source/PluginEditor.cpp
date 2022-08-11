@@ -82,7 +82,7 @@ void FftBufferAudioProcessorEditor::paint (juce::Graphics& g)
 void FftBufferAudioProcessorEditor::resized()
 {
 
-    int borderSize = 50;
+    int borderSize = 25;
     int bufferSize = 20;
     
     auto totalRegion = getLocalBounds();
@@ -91,18 +91,16 @@ void FftBufferAudioProcessorEditor::resized()
     auto topMargin = totalRegion.removeFromTop(borderSize);
     auto bottomMargine = totalRegion.removeFromBottom(borderSize);
     
-    int rightComponentHeight = 120;
-    int leftComponentHeight = totalRegion.getHeight() / 4;
+    int componentHeight = totalRegion.getHeight() / 3;
+    int componentWidth = totalRegion.getWidth() / 2;
     
-    int columnWidth = totalRegion.getWidth() / 2;
+    auto right = totalRegion.removeFromRight(componentWidth);
+    auto left = totalRegion.removeFromLeft(componentWidth);
     
-    auto right = totalRegion.removeFromRight(columnWidth);
-    auto left = totalRegion.removeFromLeft(columnWidth);
-    
-    vanityLabel.setBounds(left.removeFromTop(rightComponentHeight));
-    freezeButton.setBounds(left.removeFromTop(rightComponentHeight).reduced(25));
-    refreshButton.setBounds(left.removeFromTop(rightComponentHeight).reduced(25));
-    rateSlider.setBounds(right.removeFromTop(rightComponentHeight).reduced(bufferSize));
-    dryWetSlider.setBounds(right.removeFromTop(rightComponentHeight).reduced(bufferSize));
-    envelopeDepthSlider.setBounds(right.removeFromTop(rightComponentHeight).reduced(bufferSize));
+    vanityLabel.setBounds(left.removeFromTop(componentHeight));
+    freezeButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
+    refreshButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
+    rateSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
+    dryWetSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
+    envelopeDepthSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
 }
