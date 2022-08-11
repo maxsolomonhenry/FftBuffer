@@ -225,7 +225,10 @@ bool SimpleOlaProcessor::determineIfVoiced(const std::vector<float> &frame)
     float numZeroCrossings = countZeroCrossings(frame);
     float energy = getNormalizedEnergy(frame);
     
-    return (energy / numZeroCrossings > kVoicedThreshold);
+    bool isItSilence = (energy < 20.0);
+    bool isItVoiced = isItSilence ? true : (energy / numZeroCrossings > kVoicedThreshold);
+    
+    return isItVoiced;
 }
 
 float SimpleOlaProcessor::countZeroCrossings(const std::vector<float> &frame)

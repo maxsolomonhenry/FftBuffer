@@ -132,6 +132,8 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     setLatencySamples(kNumSpectralBufferSamples);
     
     dryWetSmoothedValue.reset(sampleRate, 0.0001);
+    
+    crossFadeValue = 1.0;
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -189,8 +191,8 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     // Calculate dry/wet coefficients (TODO: linear for now).
     auto userWetValue = dryWetSmoothedValue.getNextValue();
     
-    float wetValue = userWetValue;
-    float dryValue = 1 - wetValue;
+    float dryValue;
+    float wetValue;
 
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
@@ -219,11 +221,13 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             
             // Voiced/Unvoiced mixing logic.
             if (olaProcessor[c].getIsVoiced())
-                wetValue = std::min<float>(wetValue + kCrossFadeIncrement, userWetValue);
+                crossFadeValue = std::min<float>(crossFadeValue + kCrossFadeIncrement, userWetValue);
             else
-                wetValue = std::max<float>(wetValue - kCrossFadeIncrement, 0.0);
+                crossFadeValue = std::max<float>(crossFadeValue - kCrossFadeIncrement, 0.0);
             
-            dryValue = 1.0 - wetValue;
+            dryValue = kEqualPowerCoefficient * sqrt(1.0 - crossFadeValue);
+            wetValue = kEqualPowerCoefficient * sqrt(crossFadeValue);
+            
             DBG(wetValue);
 
             // Apply envelope and dry/wet mixing.

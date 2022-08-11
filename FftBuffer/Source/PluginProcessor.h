@@ -64,6 +64,7 @@ private:
     
     int ctrStutter;
     int samplesPerStutterPeriod;
+    float crossFadeValue;
     
     float stutterRateHz;
     const float eps{1e-4};
@@ -79,6 +80,7 @@ private:
     const float kEnvelopeGainLinear = 5.623413251903491;
     const int kEnvelopeDelaySamples = 1100;
     const float kCrossFadeIncrement = 0.0009765625;
+    const float kEqualPowerCoefficient = 0.70710678118;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
