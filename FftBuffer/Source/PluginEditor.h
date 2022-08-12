@@ -29,6 +29,7 @@ private:
     
     juce::TextButton freezeButton;
     juce::TextButton refreshButton;
+    juce::TextButton tempoSyncButton;
     
     juce::Slider rateSlider;
     juce::Label rateLabel;
@@ -40,6 +41,7 @@ private:
     juce::Label envelopeDepthLabel;
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> freezeButtonAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> tempoSyncButtonAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rateSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> dryWetSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> envelopeDepthSliderAttachment;

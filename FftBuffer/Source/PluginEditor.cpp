@@ -14,7 +14,7 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
     vanityLabel.setText("Stutter+Hold", juce::dontSendNotification);
-    vanityLabel.setJustificationType(juce::Justification::centred);
+    vanityLabel.setJustificationType(juce::Justification::right);
     vanityLabel.setFont(juce::Font(16.0, juce::Font::bold));
     vanityLabel.setColour(juce::Label::textColourId, juce::Colours::skyblue);
     addAndMakeVisible(vanityLabel);
@@ -24,6 +24,12 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     addAndMakeVisible(freezeButton);
     
     freezeButtonAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.params, "FREEZE", freezeButton);
+    
+    tempoSyncButton.setButtonText("Tempo Sync");
+    tempoSyncButton.setClickingTogglesState(true);
+    addAndMakeVisible(tempoSyncButton);
+    
+    tempoSyncButtonAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(audioProcessor.params, "TEMPOSYNC", tempoSyncButton);
     
     refreshButton.setButtonText("Refresh");
     addAndMakeVisible(refreshButton);
@@ -65,7 +71,7 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     envelopeDepthLabel.attachToComponent(&envelopeDepthSlider, false);
     envelopeDepthLabel.setJustificationType(juce::Justification::centred);
     
-    setSize (450, 460);
+    setSize (450, 530);
 }
 
 FftBufferAudioProcessorEditor::~FftBufferAudioProcessorEditor()
@@ -87,15 +93,18 @@ void FftBufferAudioProcessorEditor::resized()
     
     auto totalRegion = getLocalBounds();
     totalRegion.reduce(borderSize, borderSize);
+    vanityLabel.setBounds(totalRegion.removeFromTop(50));
+    totalRegion.removeFromTop(borderSize);
     
+    // Divide what is left over.
     int componentHeight = totalRegion.getHeight() / 3;
     int componentWidth = totalRegion.getWidth() / 2;
     
     auto right = totalRegion.removeFromRight(componentWidth);
     auto left = totalRegion.removeFromLeft(componentWidth);
     
-    vanityLabel.setBounds(left.removeFromTop(componentHeight));
     freezeButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
+    tempoSyncButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
     refreshButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
     rateSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
     envelopeDepthSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));

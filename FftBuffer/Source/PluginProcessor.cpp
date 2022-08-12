@@ -167,6 +167,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     // Get parameter valeus from GUI.
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
+    auto isTempoSyncOn = params.getRawParameterValue("TEMPOSYNC")->load();
     auto stutterRateHz = params.getRawParameterValue("STUTTERRATE")->load();
     auto dryWetGuiValue = params.getRawParameterValue("DRYWET")->load();
     auto envelopeDepth = params.getRawParameterValue("ENVDEPTH")->load();
@@ -284,11 +285,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::cre
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
     
     params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{ "FREEZE", 1 }, "Freeze", false));
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "STUTTERRATE" , 2}, "Stutter Rate", juce::NormalisableRange<float>(0.0, 12.0) ,0.0));
+    params.push_back(std::make_unique<juce::AudioParameterBool>(juce::ParameterID{"TEMPOSYNC", 2}, "Tempo Sync", false));
     
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "DRYWET", 3 }, "Dry/Wet Mix", juce::NormalisableRange<float>(0.0, 1.0), 1.0));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "STUTTERRATE" , 3}, "Stutter Rate", juce::NormalisableRange<float>(0.0, 12.0) ,0.0));
     
-    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "ENVDEPTH", 4 }, "Envelope Depth", juce::NormalisableRange<float>(0.0, 1.0), 0.0));
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "DRYWET", 4 }, "Dry/Wet Mix", juce::NormalisableRange<float>(0.0, 1.0), 1.0));
+    
+    params.push_back(std::make_unique<juce::AudioParameterFloat>(juce::ParameterID{ "ENVDEPTH", 5 }, "Envelope Depth", juce::NormalisableRange<float>(0.0, 1.0), 0.0));
     
     return { params.begin(), params.end() };
 }

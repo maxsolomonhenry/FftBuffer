@@ -81,7 +81,6 @@ private:
     const int kEnvelopeDelaySamples = 1100;
     
     Transport transport;
-    bool isTempoSyncOn = true; // TODO: Make an interface element for this.
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)
