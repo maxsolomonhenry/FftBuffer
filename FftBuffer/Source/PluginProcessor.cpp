@@ -201,7 +201,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         {
             if (isTempoSyncOn)
             {
-                if (fmod(transport.ppqPositions[n], 0.5) < 1e-4)
+                if (fmod(transport.getBeatAtSample(n), 0.5) < 1e-4)
                     olaProcessor[c].setIsRefreshRequested(true);
             }
             else

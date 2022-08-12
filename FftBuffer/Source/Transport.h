@@ -36,8 +36,12 @@ public:
         }
     }
     
-    std::vector<double> ppqPositions;
+    double getBeatAtSample(int sampleNo)
+    {
+        return ppqPositions[sampleNo];
+    }
     
 private:
     double samplesPerMinute;
+    std::vector<double> ppqPositions;
 };
