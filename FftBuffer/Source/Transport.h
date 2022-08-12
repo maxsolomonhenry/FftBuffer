@@ -36,7 +36,8 @@ public:
         }
     }
     
-private:
     std::vector<double> ppqPositions;
+    
+private:
     double samplesPerMinute;
 };

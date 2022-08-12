@@ -10,6 +10,7 @@
 
 #include <JuceHeader.h>
 #include "SimpleOlaProcessor.h"
+#include "Transport.h"
 
 //==============================================================================
 /**
@@ -78,6 +79,9 @@ private:
     const float kEnvelopeTrim = 0.9;
     const float kEnvelopeGainLinear = 5.623413251903491;
     const int kEnvelopeDelaySamples = 1100;
+    
+    Transport transport;
+    bool isTempoSyncOn = true; // TODO: Make an interface element for this.
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FftBufferAudioProcessor)

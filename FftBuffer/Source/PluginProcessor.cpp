@@ -132,6 +132,8 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     setLatencySamples(kNumSpectralBufferSamples);
     
     dryWetSmoothedValue.reset(sampleRate, 0.0001);
+    
+    transport.prepare(sampleRate, samplesPerBlock);
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -161,6 +163,9 @@ bool FftBufferAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts
 
 void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    transport.process(getPlayHead(), buffer.getNumSamples());
+    
+    // Get parameter valeus from GUI.
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
     auto stutterRateHz = params.getRawParameterValue("STUTTERRATE")->load();
     auto dryWetGuiValue = params.getRawParameterValue("DRYWET")->load();
@@ -168,6 +173,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
     
+    // Checks if new value, reassigns as necessary.
     setStutterRateHz(stutterRateHz);
     
     // Blocks.
@@ -179,7 +185,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     juce::dsp::ProcessContextNonReplacing<float> dryDelayContext(block, dryDelayBlock);
     dryDelayLine.process(dryDelayContext);
     
-    // Calculate envelope of dry audio.
+    // Calculate envelope.
     envelopeBlock.replaceWithAbsoluteValueOf(block);
     juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
     envelopeFollower.process(envelopeContext);
@@ -187,26 +193,32 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     
     // Logic for "stutter" timing (i.e., the freeze on/off).
-    for (int i = 0; i < olaProcessor.size(); ++i)
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
-        olaProcessor[i].setIsEffectRequested(isFreezeOn);
+        olaProcessor[c].setIsEffectRequested(isFreezeOn);
         
-        for (int j = 0; j < buffer.getNumSamples(); ++j)
+        for (int n = 0; n < buffer.getNumSamples(); ++n)
         {
-            // TODO: This logic can def be cleaned up.
-            if (i == 0)
-                ctrStutter++;
-
-            if (ctrStutter >= samplesPerStutterPeriod)
+            if (isTempoSyncOn)
             {
-                olaProcessor[i].setIsRefreshRequested(true);
-                
-                // TODO: This logic too is real messy.
-                if (i == (olaProcessor.size() - 1))
-                    ctrStutter = 0;
+                if (fmod(transport.ppqPositions[n], 0.5) < 1e-4)
+                    olaProcessor[c].setIsRefreshRequested(true);
+            }
+            else
+            {
+                if (c == 0)
+                    ctrStutter++;
+
+                if (ctrStutter >= samplesPerStutterPeriod)
+                {
+                    olaProcessor[c].setIsRefreshRequested(true);
+                    
+                    if (c == (olaProcessor.size() - 1))
+                        ctrStutter = 0;
+                }
             }
             
-            olaProcessor[i].process(buffer.getWritePointer(i)[j]);
+            olaProcessor[c].process(buffer.getWritePointer(c)[n]);
         }
     }
     
@@ -221,13 +233,13 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         auto* dryPointer = dryDelayBuffer.getReadPointer(c);
         auto* envelopePointer = envelopeBuffer.getWritePointer(c);
         
-        for (int s = 0; s < buffer.getNumSamples(); ++s)
+        for (int n = 0; n < buffer.getNumSamples(); ++n)
         {
             // Clip envelope to a maximum of 1.0.
-            envelopePointer[s] = envelopePointer[s] > 1.0 ? 1.0 : envelopePointer[s];
+            envelopePointer[n] = envelopePointer[n] > 1.0 ? 1.0 : envelopePointer[n];
             
-            outPointer[s] *= envelopeDepth * (envelopePointer[s] - kEnvelopeTrim) + kEnvelopeTrim;
-            outPointer[s] = outPointer[s] * wetVal + dryPointer[s] * dryVal;
+            outPointer[n] *= envelopeDepth * (envelopePointer[n] - kEnvelopeTrim) + kEnvelopeTrim;
+            outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
         }
     }
 }
