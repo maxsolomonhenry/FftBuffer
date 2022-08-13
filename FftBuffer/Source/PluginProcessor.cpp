@@ -136,7 +136,6 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
 {
     transport.process(getPlayHead(), buffer.getNumSamples());
     
-    // Get parameter valeus from GUI.
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
     auto isTempoSyncOn = params.getRawParameterValue("TEMPOSYNC")->load();
     auto stutterRateGuiValue = params.getRawParameterValue("STUTTERRATE")->load();
@@ -145,7 +144,6 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     
     setStutterRate(stutterRateGuiValue, isTempoSyncOn);
     
-    // Blocks.
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::AudioBlock<float> dryDelayBlock(dryDelayBuffer);
     juce::dsp::AudioBlock<float> envelopeBlock(envelopeBuffer);
