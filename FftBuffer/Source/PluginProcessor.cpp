@@ -224,9 +224,12 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         }
     }
     
-    // Calculate dry/wet coefficients (TODO: linear for now).
+    // Calculate dry/wet coefficients.
     auto wetVal = dryWetSmoothedValue.getNextValue();
     auto dryVal = 1.0 - wetVal;
+    
+    wetVal = kEqualPowerCoefficient * sqrt(wetVal);
+    dryVal = kEqualPowerCoefficient * sqrt(dryVal);
     
     // Apply amplitude envelope, and mix dry/wet.
     for (int c = 0; c < buffer.getNumChannels(); ++c)

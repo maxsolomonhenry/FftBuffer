@@ -83,6 +83,7 @@ private:
     const int kEnvelopeDelaySamples = 1100;
     const float kMaxStutterRateHz = 12.0;
     const float kNumSyncConditions = 10.0;
+    const float kEqualPowerCoefficient = 0.70710678118;
     
     Transport transport;
     
