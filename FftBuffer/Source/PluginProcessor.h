@@ -102,7 +102,8 @@ private:
     void delayTheDryAudio(juce::dsp::AudioBlock<float> &block, juce::dsp::AudioBlock<float> &dryDelayBlock);
     void calculateTheAmplitudeEnvelope(juce::dsp::AudioBlock<float> &block, juce::dsp::AudioBlock<float> &envelopeBlock);
     void applyFreezeEffect(juce::AudioBuffer<float> &buffer, bool isFreezeOn, bool isTempoSyncOn);
-    void applyEnvelopeAndMixWetDry(juce::AudioBuffer<float> &buffer, float &envelopeDepth, float &dryWetGuiValue);
+    void applyEnvelope(juce::AudioBuffer<float> &buffer, float &envelopeDepth);
+    void mixWetAndDry(juce::AudioBuffer<float> &buffer, float &dryWetGuiValue);
     
     Transport transport;
     

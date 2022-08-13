@@ -154,8 +154,8 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     calculateTheAmplitudeEnvelope(block, envelopeBlock);
     applyFreezeEffect(buffer, isFreezeOn, isTempoSyncOn);
     
-    // Calculate dry/wet coefficients.
-    applyEnvelopeAndMixWetDry(buffer, envelopeDepth, dryWetGuiValue);
+    applyEnvelope(buffer, envelopeDepth);
+    mixWetAndDry(buffer, dryWetGuiValue);
 }
 
 //==============================================================================
@@ -376,22 +376,12 @@ void FftBufferAudioProcessor::applyFreezeEffect(juce::AudioBuffer<float> &buffer
     }
 }
 
-void FftBufferAudioProcessor::applyEnvelopeAndMixWetDry(juce::AudioBuffer<float> &buffer, float &envelopeDepth, float &dryWetGuiValue)
+void FftBufferAudioProcessor::applyEnvelope(juce::AudioBuffer<float> &buffer, float &envelopeDepth)
 {
-    
-    dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
-    
-    auto wetVal = dryWetSmoothedValue.getNextValue();
-    auto dryVal = 1.0 - wetVal;
-    
-    wetVal = kEqualPowerCoefficient * sqrt(wetVal);
-    dryVal = kEqualPowerCoefficient * sqrt(dryVal);
-    
-    // Apply amplitude envelope, and mix dry/wet.
+
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
         auto* outPointer = buffer.getWritePointer(c);
-        auto* dryPointer = dryDelayBuffer.getReadPointer(c);
         auto* envelopePointer = envelopeBuffer.getWritePointer(c);
         
         for (int n = 0; n < buffer.getNumSamples(); ++n)
@@ -400,7 +390,26 @@ void FftBufferAudioProcessor::applyEnvelopeAndMixWetDry(juce::AudioBuffer<float>
             envelopePointer[n] = envelopePointer[n] > 1.0 ? 1.0 : envelopePointer[n];
             
             outPointer[n] *= envelopeDepth * (envelopePointer[n] - kEnvelopeTrim) + kEnvelopeTrim;
-            outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
         }
+    }
+}
+
+void FftBufferAudioProcessor::mixWetAndDry(juce::AudioBuffer<float> &buffer, float &dryWetGuiValue)
+{
+    dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
+    
+    float wetVal = dryWetSmoothedValue.getNextValue();
+    float dryVal = 1.0 - wetVal;
+    
+    wetVal = kEqualPowerCoefficient * sqrt(wetVal);
+    dryVal = kEqualPowerCoefficient * sqrt(dryVal);
+    
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
+    {
+        auto* outPointer = buffer.getWritePointer(c);
+        auto* dryPointer = dryDelayBuffer.getReadPointer(c);
+        
+        for (int n = 0; n < buffer.getNumSamples(); ++n)
+            outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
     }
 }
