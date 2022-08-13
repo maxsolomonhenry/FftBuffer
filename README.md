@@ -10,7 +10,7 @@ Under the hood it's built on a _phase vocoder_, but this is all really just an e
 - _Freeze_ sets the plugin to on or off.
 - _Tempo Sync_ sets the stutter rate to sync with the DAW playback tempo.
 - _Refresh_ is a manual trigger to grab a new frame to freeze on (only useful when Stutter Rate is set to 0).
-- _Stutter Rate_ sets the freeze update rate in Hz.
+- _Stutter Rate_ sets the freeze update rate (in Hz or beats).
 - _Envelope Depth_ determines how much the effect (the frozen part) follows the amplitude envelope of the wet signal. Fun stuff.
 - _Dry/Wet_ sets the mix of processed and unprocessed audio.
 
