@@ -54,7 +54,7 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-    void setStutterRate(float input);
+    void setStutterRate(const float &input, const bool &isTempoSyncOn);
     juce::AudioProcessorValueTreeState params;
     
     std::vector<SimpleOlaProcessor> olaProcessor;
@@ -67,7 +67,8 @@ private:
     int samplesPerStutterPeriod;
     
     float stutterRate;
-    const float eps{1e-4};
+    float stutterBeatSubdivision;
+    
     juce::AudioBuffer<float> dryDelayBuffer;
     juce::dsp::DelayLine<float> dryDelayLine;
     
@@ -76,10 +77,12 @@ private:
     juce::AudioBuffer<float> envelopeBuffer;
     juce::dsp::IIR::Filter<float> envelopeFollower;
     
+    const float kEps = 1e-4;
     const float kEnvelopeTrim = 0.9;
     const float kEnvelopeGainLinear = 5.623413251903491;
     const int kEnvelopeDelaySamples = 1100;
     const float kMaxStutterRateHz = 12.0;
+    const float kNumSyncConditions = 10.0;
     
     Transport transport;
     

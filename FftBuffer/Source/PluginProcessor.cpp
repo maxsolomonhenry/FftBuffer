@@ -175,7 +175,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
     
     // Checks if new value, reassigns as necessary.
-    setStutterRate(stutterRate);
+    setStutterRate(stutterRate, isTempoSyncOn);
     
     // Blocks.
     juce::dsp::AudioBlock<float> block(buffer);
@@ -190,6 +190,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     envelopeBlock.replaceWithAbsoluteValueOf(block);
     juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
     envelopeFollower.process(envelopeContext);
+    envelopeDelayLine.process(envelopeContext);
     envelopeBlock.multiplyBy(kEnvelopeGainLinear);
     
     
@@ -202,7 +203,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
         {
             if (isTempoSyncOn)
             {
-                if (fmod(transport.getBeatAtSample(n), 0.5) < 1e-4)
+                if (fmod(transport.getBeatAtSample(n), stutterBeatSubdivision) < kEps)
                     olaProcessor[c].setIsRefreshRequested(true);
             }
             else
@@ -296,28 +297,70 @@ juce::AudioProcessorValueTreeState::ParameterLayout FftBufferAudioProcessor::cre
     return { params.begin(), params.end() };
 }
 
-void FftBufferAudioProcessor::setStutterRate(float input)
+void FftBufferAudioProcessor::setStutterRate(const float &input, const bool &isTempoSyncOn)
 {
-    bool hasValueChanged = (abs(input - stutterRate) > eps);
+    bool hasValueChanged = (abs(input - stutterRate) > kEps);
     
     if (hasValueChanged)
     {
         stutterRate = input;
         
-        if (stutterRate > 0.0)
+        if (stutterRate <= 0.0)
         {
-            float stutterRateHz = static_cast<float>(stutterRate) * kMaxStutterRateHz;
+            samplesPerStutterPeriod = std::numeric_limits<int>::max();
+            stutterBeatSubdivision = std::numeric_limits<float>::max();
+            return;
+        }
+
+        if (isTempoSyncOn)
+        {
+            float conditionNo = std::ceil(stutterRate * kNumSyncConditions);
             
-            float periodSecs = 1.0 / stutterRateHz;
-            
-            float answerAsFloat = periodSecs * static_cast<float>(getSampleRate());
-            samplesPerStutterPeriod = static_cast<int>(answerAsFloat);
+            switch (static_cast<int>(conditionNo))
+            {
+                case 0:
+                    stutterBeatSubdivision = 4.0;
+                    break;
+                case 1:
+                    stutterBeatSubdivision = 3.0;
+                    break;
+                case 2:
+                    stutterBeatSubdivision = 2.0;
+                    break;
+                case 3:
+                    stutterBeatSubdivision = 1.0;
+                    break;
+                case 4:
+                    stutterBeatSubdivision = (3.0 / 2.0);
+                    break;
+                case 5:
+                    stutterBeatSubdivision = (2.0 / 3.0);
+                    break;
+                case 6:
+                    stutterBeatSubdivision = (1.0 / 2.0);
+                    break;
+                case 7:
+                    stutterBeatSubdivision = (1.0 / 3.0);
+                    break;
+                case 8:
+                    stutterBeatSubdivision = (1.0 / 4.0);
+                    break;
+                case 9:
+                    stutterBeatSubdivision = (1.0 / 5.0);
+                    break;
+                case 10:
+                    stutterBeatSubdivision = (1.0 / 6.0);
+                    break;
+            }
         }
         else
         {
-            samplesPerStutterPeriod = std::numeric_limits<int>::max();
+            float stutterRateHz = static_cast<float>(stutterRate) * kMaxStutterRateHz;
+            float periodSecs = 1.0 / stutterRateHz;
+            float answerAsFloat = periodSecs * static_cast<float>(getSampleRate());
+            
+            samplesPerStutterPeriod = static_cast<int>(answerAsFloat);
         }
-        
-        DBG(samplesPerStutterPeriod);
+
     }
 }
