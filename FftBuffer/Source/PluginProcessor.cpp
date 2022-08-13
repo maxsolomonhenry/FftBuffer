@@ -95,44 +95,15 @@ void FftBufferAudioProcessor::changeProgramName (int index, const juce::String& 
 void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     
-    juce::dsp::ProcessSpec spec;
-    spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = getTotalNumOutputChannels();
+    juce::dsp::ProcessSpec spec = getProcessSpec(sampleRate, samplesPerBlock);
     
-    const int kNumSpectralBufferSamples = 4096;
-    
-    // Necessary in the case that `prepareToPlay` is called more than once.
-    olaProcessor.clear();
-    
-    // Build one processor per channel.
-    for (int i = 0; i < getTotalNumInputChannels(); ++i)
-    {
-        olaProcessor.push_back(SimpleOlaProcessor(kNumSpectralBufferSamples, 4));
-    }
-        
-    dryDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples);
-    dryDelayLine.prepare(spec);
-    dryDelayLine.setDelay(kNumSpectralBufferSamples);
-    
-    envelopeDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
-    envelopeDelayLine.prepare(spec);
-    envelopeDelayLine.setDelay(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
-    
-    envelopeFollower = juce::dsp::IIR::Filter<float>(juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 100.0, 1.0));
-    envelopeFollower.prepare(spec);
-    
-    dryDelayBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
-    envelopeBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
-    
-    stutterRate = 0.0;
-    samplesPerStutterPeriod = std::numeric_limits<int>::max();
-    ctrStutter = 0;
+    initOlaProcessor();
+    initDrySignalChain(spec);
+    initEnvelopeFollower(spec);
+    initStutterCounting();
     
     setLatencySamples(kNumSpectralBufferSamples);
-    
     dryWetSmoothedValue.reset(sampleRate, 0.0001);
-    
     transport.prepare(sampleRate, samplesPerBlock);
 }
 
@@ -189,7 +160,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     // Calculate envelope.
     envelopeBlock.replaceWithAbsoluteValueOf(block);
     juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
-    envelopeFollower.process(envelopeContext);
+    envelopeLpFilter.process(envelopeContext);
     envelopeDelayLine.process(envelopeContext);
     envelopeBlock.multiplyBy(kEnvelopeGainLinear);
     
@@ -366,4 +337,56 @@ void FftBufferAudioProcessor::setStutterRate(const float &input, const bool &isT
         }
 
     }
+}
+
+juce::dsp::ProcessSpec FftBufferAudioProcessor::getProcessSpec(double sampleRate, int samplesPerBlock)
+{
+    juce::dsp::ProcessSpec spec;
+    
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumOutputChannels();
+    
+    return spec;
+}
+
+void FftBufferAudioProcessor::initDrySignalChain(const juce::dsp::ProcessSpec &spec)
+{
+    dryDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples);
+    dryDelayLine.prepare(spec);
+    dryDelayLine.setDelay(kNumSpectralBufferSamples);
+    
+    dryDelayBuffer.setSize(getTotalNumInputChannels(), spec.maximumBlockSize);
+}
+
+void FftBufferAudioProcessor::initEnvelopeFollower(const juce::dsp::ProcessSpec &spec)
+{
+    envelopeDelayLine = juce::dsp::DelayLine<float>(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
+    envelopeDelayLine.prepare(spec);
+    envelopeDelayLine.setDelay(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
+    
+    envelopeLpFilter = juce::dsp::IIR::Filter<float>(
+        juce::dsp::IIR::Coefficients<float>::makeLowPass(spec.sampleRate, 100.0, 1.0)
+    );
+    
+    envelopeLpFilter.prepare(spec);
+    
+    envelopeBuffer.setSize(getTotalNumInputChannels(), spec.maximumBlockSize);
+}
+
+void FftBufferAudioProcessor::initOlaProcessor()
+{
+    // Necessary in the case that `prepareToPlay` is called more than once.
+    olaProcessor.clear();
+    
+    // Build one processor per channel.
+    for (int i = 0; i < getTotalNumInputChannels(); ++i)
+        olaProcessor.push_back(SimpleOlaProcessor(kNumSpectralBufferSamples, kNumOverlap));
+}
+
+void FftBufferAudioProcessor::initStutterCounting()
+{
+    stutterRate = 0.0;
+    samplesPerStutterPeriod = std::numeric_limits<int>::max();
+    ctrStutter = 0;
 }

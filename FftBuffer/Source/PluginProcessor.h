@@ -75,7 +75,10 @@ private:
     juce::dsp::DelayLine<float> envelopeDelayLine;
     
     juce::AudioBuffer<float> envelopeBuffer;
-    juce::dsp::IIR::Filter<float> envelopeFollower;
+    juce::dsp::IIR::Filter<float> envelopeLpFilter;
+    
+    const int kNumSpectralBufferSamples = 2048;
+    const int kNumOverlap = 4;
     
     const float kEps = 1e-4;
     const float kEnvelopeTrim = 0.9;
@@ -84,6 +87,13 @@ private:
     const float kMaxStutterRateHz = 12.0;
     const float kNumSyncConditions = 10.0;
     const float kEqualPowerCoefficient = 0.70710678118;
+    
+    juce::dsp::ProcessSpec getProcessSpec(double sampleRate, int samplesPerBlock);
+    
+    void initOlaProcessor();
+    void initDrySignalChain(const juce::dsp::ProcessSpec &spec);
+    void initEnvelopeFollower(const juce::dsp::ProcessSpec &spec);
+    void initStutterCounting();
     
     Transport transport;
     
