@@ -139,85 +139,23 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     // Get parameter valeus from GUI.
     auto isFreezeOn = params.getRawParameterValue("FREEZE")->load();
     auto isTempoSyncOn = params.getRawParameterValue("TEMPOSYNC")->load();
-    auto stutterRate = params.getRawParameterValue("STUTTERRATE")->load();
+    auto stutterRateGuiValue = params.getRawParameterValue("STUTTERRATE")->load();
     auto dryWetGuiValue = params.getRawParameterValue("DRYWET")->load();
     auto envelopeDepth = params.getRawParameterValue("ENVDEPTH")->load();
     
-    dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
-    
-    // Checks if new value, reassigns as necessary.
-    setStutterRate(stutterRate, isTempoSyncOn);
+    setStutterRate(stutterRateGuiValue, isTempoSyncOn);
     
     // Blocks.
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::AudioBlock<float> dryDelayBlock(dryDelayBuffer);
     juce::dsp::AudioBlock<float> envelopeBlock(envelopeBuffer);
     
-    // Delay dry audio.
-    juce::dsp::ProcessContextNonReplacing<float> dryDelayContext(block, dryDelayBlock);
-    dryDelayLine.process(dryDelayContext);
-    
-    // Calculate envelope.
-    envelopeBlock.replaceWithAbsoluteValueOf(block);
-    juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
-    envelopeLpFilter.process(envelopeContext);
-    envelopeDelayLine.process(envelopeContext);
-    envelopeBlock.multiplyBy(kEnvelopeGainLinear);
-    
-    
-    // Logic for "stutter" timing (i.e., the freeze on/off).
-    for (int c = 0; c < buffer.getNumChannels(); ++c)
-    {
-        olaProcessor[c].setIsEffectRequested(isFreezeOn);
-        
-        for (int n = 0; n < buffer.getNumSamples(); ++n)
-        {
-            if (isTempoSyncOn)
-            {
-                if (fmod(transport.getBeatAtSample(n), stutterBeatSubdivision) < kEps)
-                    olaProcessor[c].setIsRefreshRequested(true);
-            }
-            else
-            {
-                if (c == 0)
-                    ctrStutter++;
-
-                if (ctrStutter >= samplesPerStutterPeriod)
-                {
-                    olaProcessor[c].setIsRefreshRequested(true);
-                    
-                    if (c == (olaProcessor.size() - 1))
-                        ctrStutter = 0;
-                }
-            }
-            
-            olaProcessor[c].process(buffer.getWritePointer(c)[n]);
-        }
-    }
+    delayTheDryAudio(block, dryDelayBlock);
+    calculateTheAmplitudeEnvelope(block, envelopeBlock);
+    applyFreezeEffect(buffer, isFreezeOn, isTempoSyncOn);
     
     // Calculate dry/wet coefficients.
-    auto wetVal = dryWetSmoothedValue.getNextValue();
-    auto dryVal = 1.0 - wetVal;
-    
-    wetVal = kEqualPowerCoefficient * sqrt(wetVal);
-    dryVal = kEqualPowerCoefficient * sqrt(dryVal);
-    
-    // Apply amplitude envelope, and mix dry/wet.
-    for (int c = 0; c < buffer.getNumChannels(); ++c)
-    {
-        auto* outPointer = buffer.getWritePointer(c);
-        auto* dryPointer = dryDelayBuffer.getReadPointer(c);
-        auto* envelopePointer = envelopeBuffer.getWritePointer(c);
-        
-        for (int n = 0; n < buffer.getNumSamples(); ++n)
-        {
-            // Clip envelope to a maximum of 1.0.
-            envelopePointer[n] = envelopePointer[n] > 1.0 ? 1.0 : envelopePointer[n];
-            
-            outPointer[n] *= envelopeDepth * (envelopePointer[n] - kEnvelopeTrim) + kEnvelopeTrim;
-            outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
-        }
-    }
+    applyEnvelopeAndMixWetDry(buffer, envelopeDepth, dryWetGuiValue);
 }
 
 //==============================================================================
@@ -389,4 +327,80 @@ void FftBufferAudioProcessor::initStutterCounting()
     stutterRate = 0.0;
     samplesPerStutterPeriod = std::numeric_limits<int>::max();
     ctrStutter = 0;
+}
+
+void FftBufferAudioProcessor::delayTheDryAudio(juce::dsp::AudioBlock<float> &block, juce::dsp::AudioBlock<float> &dryDelayBlock)
+{
+    juce::dsp::ProcessContextNonReplacing<float> dryDelayContext(block, dryDelayBlock);
+    dryDelayLine.process(dryDelayContext);
+}
+
+void FftBufferAudioProcessor::calculateTheAmplitudeEnvelope(juce::dsp::AudioBlock<float> &block, juce::dsp::AudioBlock<float> &envelopeBlock)
+{
+    envelopeBlock.replaceWithAbsoluteValueOf(block);
+    juce::dsp::ProcessContextReplacing<float> envelopeContext(envelopeBlock);
+    envelopeLpFilter.process(envelopeContext);
+    envelopeDelayLine.process(envelopeContext);
+    envelopeBlock.multiplyBy(kEnvelopeGainLinear);
+}
+
+void FftBufferAudioProcessor::applyFreezeEffect(juce::AudioBuffer<float> &buffer, bool isFreezeOn, bool isTempoSyncOn)
+{
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
+    {
+        olaProcessor[c].setIsEffectRequested(isFreezeOn);
+        
+        for (int n = 0; n < buffer.getNumSamples(); ++n)
+        {
+            if (isTempoSyncOn)
+            {
+                if (fmod(transport.getBeatAtSample(n), stutterBeatSubdivision) < kEps)
+                    olaProcessor[c].setIsRefreshRequested(true);
+            }
+            else
+            {
+                if (c == 0)
+                    ctrStutter++;
+                
+                if (ctrStutter >= samplesPerStutterPeriod)
+                {
+                    olaProcessor[c].setIsRefreshRequested(true);
+                    
+                    if (c == (olaProcessor.size() - 1))
+                        ctrStutter = 0;
+                }
+            }
+            
+            olaProcessor[c].process(buffer.getWritePointer(c)[n]);
+        }
+    }
+}
+
+void FftBufferAudioProcessor::applyEnvelopeAndMixWetDry(juce::AudioBuffer<float> &buffer, float &envelopeDepth, float &dryWetGuiValue)
+{
+    
+    dryWetSmoothedValue.setTargetValue(dryWetGuiValue);
+    
+    auto wetVal = dryWetSmoothedValue.getNextValue();
+    auto dryVal = 1.0 - wetVal;
+    
+    wetVal = kEqualPowerCoefficient * sqrt(wetVal);
+    dryVal = kEqualPowerCoefficient * sqrt(dryVal);
+    
+    // Apply amplitude envelope, and mix dry/wet.
+    for (int c = 0; c < buffer.getNumChannels(); ++c)
+    {
+        auto* outPointer = buffer.getWritePointer(c);
+        auto* dryPointer = dryDelayBuffer.getReadPointer(c);
+        auto* envelopePointer = envelopeBuffer.getWritePointer(c);
+        
+        for (int n = 0; n < buffer.getNumSamples(); ++n)
+        {
+            // Clip envelope to a maximum of 1.0.
+            envelopePointer[n] = envelopePointer[n] > 1.0 ? 1.0 : envelopePointer[n];
+            
+            outPointer[n] *= envelopeDepth * (envelopePointer[n] - kEnvelopeTrim) + kEnvelopeTrim;
+            outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
+        }
+    }
 }

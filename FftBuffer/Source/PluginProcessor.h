@@ -30,7 +30,11 @@ public:
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
    #endif
 
-    void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    void extracted(juce::AudioBuffer<float> &buffer, float isFreezeOn, float isTempoSyncOn);
+    
+    void extracted(juce::AudioBuffer<float> &buffer, float envelopeDepth);
+    
+void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     //==============================================================================
     juce::AudioProcessorEditor* createEditor() override;
@@ -77,7 +81,7 @@ private:
     juce::AudioBuffer<float> envelopeBuffer;
     juce::dsp::IIR::Filter<float> envelopeLpFilter;
     
-    const int kNumSpectralBufferSamples = 2048;
+    const int kNumSpectralBufferSamples = 4096;
     const int kNumOverlap = 4;
     
     const float kEps = 1e-4;
@@ -94,6 +98,11 @@ private:
     void initDrySignalChain(const juce::dsp::ProcessSpec &spec);
     void initEnvelopeFollower(const juce::dsp::ProcessSpec &spec);
     void initStutterCounting();
+    
+    void delayTheDryAudio(juce::dsp::AudioBlock<float> &block, juce::dsp::AudioBlock<float> &dryDelayBlock);
+    void calculateTheAmplitudeEnvelope(juce::dsp::AudioBlock<float> &block, juce::dsp::AudioBlock<float> &envelopeBlock);
+    void applyFreezeEffect(juce::AudioBuffer<float> &buffer, bool isFreezeOn, bool isTempoSyncOn);
+    void applyEnvelopeAndMixWetDry(juce::AudioBuffer<float> &buffer, float &envelopeDepth, float &dryWetGuiValue);
     
     Transport transport;
     
