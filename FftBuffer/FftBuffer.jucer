@@ -26,7 +26,7 @@
   <EXPORTFORMATS>
     <XCODE_MAC targetFolder="Builds/MacOSX" microphonePermissionNeeded="1">
       <CONFIGURATIONS>
-        <CONFIGURATION isDebug="1" name="Debug" targetName="FftBuffer"/>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="StutterAndHold"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="StutterAndHold"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
