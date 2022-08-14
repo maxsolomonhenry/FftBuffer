@@ -13,6 +13,13 @@
 FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
+    addAndMakeVisible(bufferSizeMenu);
+    bufferSizeMenu.addItem("4096", 1);
+    bufferSizeMenu.addItem("2048", 2);
+    bufferSizeMenu.setSelectedId(1);
+    
+    bufferSizeMenuAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(audioProcessor.params, "BUFFERSIZE", bufferSizeMenu);
+    
     vanityLabel.setText("Stutter+Hold", juce::dontSendNotification);
     vanityLabel.setJustificationType(juce::Justification::centred);
     vanityLabel.setFont(juce::Font(16.0, juce::Font::bold));
@@ -71,7 +78,7 @@ FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProc
     envelopeDepthLabel.attachToComponent(&envelopeDepthSlider, false);
     envelopeDepthLabel.setJustificationType(juce::Justification::centred);
     
-    setSize (450, 530);
+    setSize (450, 570);
 }
 
 FftBufferAudioProcessorEditor::~FftBufferAudioProcessorEditor()
@@ -93,19 +100,21 @@ void FftBufferAudioProcessorEditor::resized()
     
     auto totalRegion = getLocalBounds();
     totalRegion.reduce(borderSize, borderSize);
-    vanityLabel.setBounds(totalRegion.removeFromTop(50));
     totalRegion.removeFromTop(borderSize);
     
     // Divide what is left over.
-    int componentHeight = totalRegion.getHeight() / 3;
+    int componentHeight = totalRegion.getHeight() / 4;
     int componentWidth = totalRegion.getWidth() / 2;
     
     auto right = totalRegion.removeFromRight(componentWidth);
     auto left = totalRegion.removeFromLeft(componentWidth);
     
+    bufferSizeMenu.setBounds(left.removeFromTop(componentHeight).reduced(35));
     freezeButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
     tempoSyncButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
     refreshButton.setBounds(left.removeFromTop(componentHeight).reduced(35));
+    
+    vanityLabel.setBounds(right.removeFromTop(componentHeight));
     rateSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
     envelopeDepthSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));
     dryWetSlider.setBounds(right.removeFromTop(componentHeight).reduced(bufferSize));

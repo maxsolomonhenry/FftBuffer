@@ -55,9 +55,12 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
     void setStutterRate(const float &input, const bool &isTempoSyncOn);
+    void setBufferSize(int bufferSizeMenuNo);
     juce::AudioProcessorValueTreeState params;
     
     std::vector<SimpleOlaProcessor> olaProcessor;
+    
+    void updateThingsWithNewSpectralBufferSize();
     
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameters();
@@ -65,6 +68,8 @@ private:
     
     int ctrStutter;
     int samplesPerStutterPeriod;
+    int currentBufferSizeMenuNo = 0;
+    int numSpectralBufferSamples = 4096;
     
     float stutterRate;
     float stutterBeatSubdivision;
