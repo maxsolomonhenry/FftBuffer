@@ -13,7 +13,7 @@
 FftBufferAudioProcessorEditor::FftBufferAudioProcessorEditor (FftBufferAudioProcessor& p)
     : AudioProcessorEditor (&p), audioProcessor (p)
 {
-    vanityLabel.setText("Stutter+Hold", juce::dontSendNotification);
+    vanityLabel.setText("Stutter+Hold_DECAY", juce::dontSendNotification);
     vanityLabel.setJustificationType(juce::Justification::centred);
     vanityLabel.setFont(juce::Font(16.0, juce::Font::bold));
     vanityLabel.setColour(juce::Label::textColourId, juce::Colours::skyblue);

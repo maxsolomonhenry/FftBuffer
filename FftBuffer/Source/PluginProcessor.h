@@ -84,6 +84,9 @@ private:
     const float kMaxStutterRateHz = 12.0;
     const float kNumSyncConditions = 10.0;
     const float kEqualPowerCoefficient = 0.70710678118;
+    const float kDecayGainCoefficient = 1.3815510558;
+    
+    std::vector<float> decayGainTimeline;
     
     Transport transport;
     

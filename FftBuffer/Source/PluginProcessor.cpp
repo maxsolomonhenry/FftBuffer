@@ -134,6 +134,8 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     dryWetSmoothedValue.reset(sampleRate, 0.0001);
     
     transport.prepare(sampleRate, samplesPerBlock);
+    
+    decayGainTimeline.resize(samplesPerBlock);
 }
 
 void FftBufferAudioProcessor::releaseResources()
@@ -199,17 +201,30 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     {
         olaProcessor[c].setIsEffectRequested(isFreezeOn);
         
+        float stutterPercent;
         for (int n = 0; n < buffer.getNumSamples(); ++n)
         {
             if (isTempoSyncOn)
             {
-                if (fmod(transport.getBeatAtSample(n), stutterBeatSubdivision) < kEps)
-                    olaProcessor[c].setIsRefreshRequested(true);
+                if (c == 0)
+                {
+                    float beatFraction = fmod(transport.getBeatAtSample(n), stutterBeatSubdivision);
+                    
+                    if (beatFraction < kEps)
+                        olaProcessor[c].setIsRefreshRequested(true);
+                    
+                    stutterPercent = beatFraction / stutterBeatSubdivision;
+                }
+                
             }
             else
             {
                 if (c == 0)
+                {
                     ctrStutter++;
+                    stutterPercent = static_cast<float>(ctrStutter) / static_cast<float>(samplesPerStutterPeriod);
+                }
+                    
 
                 if (ctrStutter >= samplesPerStutterPeriod)
                 {
@@ -218,7 +233,11 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
                     if (c == (olaProcessor.size() - 1))
                         ctrStutter = 0;
                 }
+                
             }
+            
+            if (c == 0)
+                decayGainTimeline[n] = juce::dsp::FastMathApproximations::exp(- stutterPercent * kDecayGainCoefficient);
             
             olaProcessor[c].process(buffer.getWritePointer(c)[n]);
         }
@@ -243,7 +262,13 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             // Clip envelope to a maximum of 1.0.
             envelopePointer[n] = envelopePointer[n] > 1.0 ? 1.0 : envelopePointer[n];
             
+            // Apply envelope.
             outPointer[n] *= envelopeDepth * (envelopePointer[n] - kEnvelopeTrim) + kEnvelopeTrim;
+            
+            // Apply decay gain.
+            outPointer[n] *= decayGainTimeline[n];
+            
+            // Mix wet and dry.
             outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
         }
     }
