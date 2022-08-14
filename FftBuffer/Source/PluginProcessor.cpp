@@ -231,7 +231,9 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
                     olaProcessor[c].setIsRefreshRequested(true);
                     
                     if (c == (olaProcessor.size() - 1))
+                    {
                         ctrStutter = 0;
+                    }
                 }
                 
             }

@@ -33,15 +33,17 @@ void OlaBuffer::initOlaBuffer()
     pDelayBuffer = 0;
     pOverlapAddBuffer = 0;
     pNewestFrame = 0;
+    
+    numSamplesIntoHop = 0;
 }
 
 void OlaBuffer::process(float& x)
 {
     delayBuffer[pDelayBuffer] = x;
     
-    bool isThisHopComplete = (pDelayBuffer % hopSize == 0);
+    numSamplesIntoHop = (pDelayBuffer % hopSize);
     
-    if (isThisHopComplete)
+    if (numSamplesIntoHop == 0)
     {
         std::vector<float>& newestFrame = frameBuffers[pNewestFrame];
         
@@ -96,4 +98,14 @@ void OlaBuffer::fillFrameFromDelayBuffer(std::vector<float> &frame)
         frame[n] = delayBuffer[pRead];
         pRead = (pRead + 1) % frameSize;
     }
+}
+
+int OlaBuffer::getNumSamplesIntoHop()
+{
+    return numSamplesIntoHop;
+}
+
+int OlaBuffer::getHopSize()
+{
+    return hopSize;
 }

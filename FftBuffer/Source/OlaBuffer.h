@@ -17,6 +17,9 @@ public:
     void process(float& x);
     void initOlaBuffer();
     
+    int getNumSamplesIntoHop();
+    int getHopSize();
+    
 protected:
     int frameSize;
     int numOverlap;
@@ -33,4 +36,6 @@ protected:
     void fillFrameFromDelayBuffer(std::vector<float> &frame);
     void fillOverlapAddBuffer();
     virtual void processFrameBuffers();
+    
+    int numSamplesIntoHop;
 };
