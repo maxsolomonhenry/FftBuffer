@@ -64,7 +64,8 @@ private:
     juce::LinearSmoothedValue<float> dryWetSmoothedValue { 1.0 };
     
     int ctrStutter;
-    int samplesPerStutterPeriod;
+    int numSamplesPerStutterPeriod;
+    int numSamplesToNextStutterFrame;
     
     float stutterRate;
     float stutterBeatSubdivision;
@@ -75,7 +76,7 @@ private:
     juce::dsp::DelayLine<float> envelopeDelayLine;
     
     juce::AudioBuffer<float> envelopeBuffer;
-    juce::dsp::IIR::Filter<float> envelopeFollower;
+    juce::dsp::ProcessorDuplicator<juce::dsp::IIR::Filter<float>, juce::dsp::IIR::Coefficients<float>> envelopeFollower;
     
     const float kEps = 1e-4;
     const float kEnvelopeTrim = 0.9;
@@ -85,6 +86,8 @@ private:
     const float kNumSyncConditions = 10.0;
     const float kEqualPowerCoefficient = 0.70710678118;
     const float kDecayGainCoefficient = 1.3815510558;
+    
+    int calculateNumSamplesToNextStutterFrame();
     
     std::vector<float> decayGainTimeline;
     

@@ -15,9 +15,9 @@ FftBufferAudioProcessor::FftBufferAudioProcessor()
      : AudioProcessor (BusesProperties()
                      #if ! JucePlugin_IsMidiEffect
                       #if ! JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::mono(), true)
+                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                       #endif
-                       .withOutput ("Output", juce::AudioChannelSet::mono(), true)
+                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        )
     , params(*this, nullptr, "PARAMETERS", createParameters() )
@@ -119,14 +119,14 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     envelopeDelayLine.prepare(spec);
     envelopeDelayLine.setDelay(kNumSpectralBufferSamples - kEnvelopeDelaySamples);
     
-    envelopeFollower = juce::dsp::IIR::Filter<float>(juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 100.0, 1.0));
+    envelopeFollower.state = juce::dsp::IIR::Coefficients<float>::makeLowPass(sampleRate, 100.0, 1.0);
     envelopeFollower.prepare(spec);
     
     dryDelayBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
     envelopeBuffer.setSize(getTotalNumInputChannels(), samplesPerBlock);
     
     stutterRate = 0.0;
-    samplesPerStutterPeriod = std::numeric_limits<int>::max();
+    numSamplesPerStutterPeriod = std::numeric_limits<int>::max();
     ctrStutter = 0;
     
     setLatencySamples(kNumSpectralBufferSamples);
@@ -196,12 +196,13 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
     envelopeBlock.multiplyBy(kEnvelopeGainLinear);
     
     
+    float stutterPercent;
+    
     // Logic for "stutter" timing (i.e., the freeze on/off).
     for (int c = 0; c < buffer.getNumChannels(); ++c)
     {
         olaProcessor[c].setIsEffectRequested(isFreezeOn);
         
-        float stutterPercent;
         for (int n = 0; n < buffer.getNumSamples(); ++n)
         {
             if (isTempoSyncOn)
@@ -222,17 +223,25 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
                 if (c == 0)
                 {
                     ctrStutter++;
-                    stutterPercent = static_cast<float>(ctrStutter) / static_cast<float>(samplesPerStutterPeriod);
+                    stutterPercent = static_cast<float>(std::max(ctrStutter, 0)) / static_cast<float>(numSamplesToNextStutterFrame);
                 }
                     
 
-                if (ctrStutter >= samplesPerStutterPeriod)
+                if (ctrStutter == numSamplesToNextStutterFrame - olaProcessor[0].getHopSize() - 1)
                 {
                     olaProcessor[c].setIsRefreshRequested(true);
+                }
+                
+                if (ctrStutter >= numSamplesToNextStutterFrame)
+                {
                     
                     if (c == (olaProcessor.size() - 1))
                     {
-                        ctrStutter = 0;
+                        numSamplesToNextStutterFrame = calculateNumSamplesToNextStutterFrame();
+                        
+                        // Start counter slightly off of zero, to avoid propagating rounding error.
+                        ctrStutter = numSamplesToNextStutterFrame - numSamplesPerStutterPeriod;
+
                     }
                 }
                 
@@ -339,7 +348,7 @@ void FftBufferAudioProcessor::setStutterRate(const float &input, const bool &isT
         
         if (stutterRate <= 0.0)
         {
-            samplesPerStutterPeriod = std::numeric_limits<int>::max();
+            numSamplesPerStutterPeriod = std::numeric_limits<int>::max();
             stutterBeatSubdivision = std::numeric_limits<float>::max();
             return;
         }
@@ -391,8 +400,16 @@ void FftBufferAudioProcessor::setStutterRate(const float &input, const bool &isT
             float periodSecs = 1.0 / stutterRateHz;
             float answerAsFloat = periodSecs * static_cast<float>(getSampleRate());
             
-            samplesPerStutterPeriod = static_cast<int>(answerAsFloat);
+            numSamplesPerStutterPeriod = static_cast<int>(answerAsFloat);
+            numSamplesToNextStutterFrame = calculateNumSamplesToNextStutterFrame();
         }
 
     }
+}
+
+int FftBufferAudioProcessor::calculateNumSamplesToNextStutterFrame()
+{
+    SimpleOlaProcessor& ola = olaProcessor[0];
+    int numSamplesToNextFrame = ola.getHopSize() - ola.getNumSamplesIntoHop();
+    return round( (numSamplesPerStutterPeriod - numSamplesToNextFrame) / ola.getHopSize() ) * ola.getHopSize() + numSamplesToNextFrame;
 }
