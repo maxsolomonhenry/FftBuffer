@@ -268,6 +268,8 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             // Apply decay gain.
             outPointer[n] *= decayGainTimeline[n];
             
+            DBG(decayGainTimeline[n]);
+            
             // Mix wet and dry.
             outPointer[n] = outPointer[n] * wetVal + dryPointer[n] * dryVal;
         }
