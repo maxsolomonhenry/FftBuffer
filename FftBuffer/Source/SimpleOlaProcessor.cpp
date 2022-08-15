@@ -96,7 +96,7 @@ void SimpleOlaProcessor::processFrameBuffers()
         std::copy(frameBuffers[frameIdx].begin(), frameBuffers[frameIdx].end(), fftBuffer[n].begin());
         
         fft.performRealOnlyForwardTransform(fftBuffer[n].data());
-        convertToMagnitudeAndPhase(fftBuffer[n]);
+        convertToPolar(fftBuffer[n]);
     }
     
     if (isRefreshRequested)
@@ -144,7 +144,7 @@ void SimpleOlaProcessor::processFrameBuffers()
     {
         int frameIdx = nonnegativeModulus(pNewestFrame - n, numOverlap);
  
-        convertToPolar(fftBuffer[n]);
+        convertToRectangular(fftBuffer[n]);
         fft.performRealOnlyInverseTransform(fftBuffer[n].data());
                 
         std::copy(fftBuffer[n].begin(), fftBuffer[n].begin() + frameBuffers[frameIdx].size(), frameBuffers[frameIdx].begin());
@@ -180,7 +180,7 @@ int SimpleOlaProcessor::nonnegativeModulus(int i, int n)
     return (i % n + n) % n;
 }
 
-void SimpleOlaProcessor::convertToMagnitudeAndPhase(std::vector<float> &X)
+void SimpleOlaProcessor::convertToPolar(std::vector<float> &X)
 {
     for (int n = 0; n < X.size(); n += 2)
     {
@@ -195,7 +195,7 @@ void SimpleOlaProcessor::convertToMagnitudeAndPhase(std::vector<float> &X)
     }
 }
 
-void SimpleOlaProcessor::convertToPolar(std::vector<float> &X)
+void SimpleOlaProcessor::convertToRectangular(std::vector<float> &X)
 {
     for (int n = 0; n < X.size(); n += 2)
     {
