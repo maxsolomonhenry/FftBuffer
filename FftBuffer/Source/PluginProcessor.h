@@ -82,6 +82,7 @@ private:
     const float kEnvelopeTrim = 0.9;
     const float kEnvelopeGainLinear = 5.623413251903491;
     const int kEnvelopeDelaySamples = 1100;
+    const int kNumSpectralBufferSamples = 4096;
     const float kMaxStutterRateHz = 12.0;
     const float kNumSyncConditions = 10.0;
     const float kEqualPowerCoefficient = 0.70710678118;

@@ -100,8 +100,6 @@ void FftBufferAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBl
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
     
-    const int kNumSpectralBufferSamples = 4096;
-    
     // Necessary in the case that `prepareToPlay` is called more than once.
     olaProcessor.clear();
     
@@ -209,7 +207,9 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
             {
                 if (c == 0)
                 {
-                    float beatFraction = fmod(transport.getBeatAtSample(n), stutterBeatSubdivision);
+                    double latencyInBeats = transport.getBeatsPerSample() * static_cast<float>(kNumSpectralBufferSamples);
+                    
+                    float beatFraction = fmod(transport.getBeatAtSample(n) - latencyInBeats, stutterBeatSubdivision);
                     
                     if (beatFraction < kEps)
                         olaProcessor[c].setIsRefreshRequested(true);
@@ -227,7 +227,7 @@ void FftBufferAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, ju
                 }
                     
 
-                if (ctrStutter == numSamplesToNextStutterFrame - olaProcessor[0].getHopSize() - 1)
+                if (ctrStutter == numSamplesToNextStutterFrame - 3 * olaProcessor[0].getHopSize() - 1)
                 {
                     olaProcessor[c].setIsRefreshRequested(true);
                 }

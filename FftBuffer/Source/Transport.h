@@ -27,7 +27,7 @@ public:
         {
             auto info = playHead->getPosition();
             
-            double beatsPerSample = *info->getBpm() / samplesPerMinute;
+            beatsPerSample = *info->getBpm() / samplesPerMinute;
             
             for (int n = 0; n < numSamples; ++n)
             {
@@ -41,7 +41,13 @@ public:
         return ppqPositions[sampleNo];
     }
     
+    double getBeatsPerSample()
+    {
+        return beatsPerSample;
+    }
+    
 private:
     double samplesPerMinute;
+    double beatsPerSample;
     std::vector<double> ppqPositions;
 };
