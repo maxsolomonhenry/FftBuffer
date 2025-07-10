@@ -5,3 +5,14 @@ FftBuffer/Builds
 *.mp3
 .DS_Store
 
+# CMake build directories
+build/
+cmake-build-*/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+

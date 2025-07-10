@@ -50,7 +50,6 @@ classdef OlaBuffer < handle
             if mod(obj.pDelayBuffer, obj.hopSize) == 1
     
                 obj.frameBuffers(:, obj.pNewestFrame) = obj.fillNewestFrameFromDelayBuffer();
-
                 obj.frameBuffers(:, obj.pNewestFrame) = obj.frameProcesser(obj.frameBuffers(:, obj.pNewestFrame));
 
                 obj.fillAddBuffer();
