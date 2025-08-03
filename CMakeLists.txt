@@ -25,7 +25,7 @@ set(PLUGIN_SOURCES
 
 # Create plugin target
 juce_add_plugin(StutterAndHold
-    COMPANY_NAME "Pass By Reference"
+    COMPANY_NAME "PassByReference"
     COMPANY_EMAIL "max.henry@mail.mcgill.ca"
     PLUGIN_MANUFACTURER_CODE PbRf
     PLUGIN_CODE StHd
